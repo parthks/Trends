@@ -1,7 +1,8 @@
 "use client";
-import { useEffect } from "react";
-import ImgButton from "./ui/ImgButton";
 import { useAppStore } from "@/store/useAppStore";
+import { useEffect } from "react";
+import { Button } from "./ui/button";
+import Image from "next/image";
 
 export default function ConnectButton({ className, onClickAction }: { className?: string; onClickAction?: () => void }) {
   const { setWalletAddressID, walletAddressID } = useAppStore();
@@ -15,47 +16,50 @@ export default function ConnectButton({ className, onClickAction }: { className?
     return () => removeEventListener("arweaveWalletLoaded", handleWalletLoaded);
   }, []);
 
-  if (walletAddressID) return <div>Connected</div>;
+  if (walletAddressID) return <div>Connected {`${walletAddressID.slice(0, 4)}...${walletAddressID.slice(-4)}`}</div>;
 
   //   if (!walletLoaded) return null;
 
   return (
-    <ImgButton
-      src={"https://arweave.net/3Bvp1vK2_SRYeeA2SCVxFip_98QqCt8lpdBacII0wMg"}
-      alt="Connect with AOConnect Wallet"
-      className={className}
-      onClick={async () => {
-        if (walletAddressID) {
-          // disconnect from the extension
-          await window.arweaveWallet.disconnect();
-          setWalletAddressID(null);
-          return;
-        }
-        if (!window.arweaveWallet?.connect) {
-          alert("Please install ArConnect");
-          return;
-        }
-        // connect to the extension
-        try {
-          await window.arweaveWallet.connect(
-            // request permissions to read the active address
-            ["ACCESS_ADDRESS", "SIGN_TRANSACTION", "DISPATCH"],
-            // provide some extra info for our app
-            {
-              name: "Trends",
-              // logo: "https://arweave.net/IvZQHCqSNVCTjqflozr_QaiuxVZrq2_GzRX3JeP88tY",
-            }
-          );
-        } catch (error) {
-          console.error(error);
-          return;
-        }
+    <div className="flex items-center gap-2">
+      <Button
+        className={className}
+        onClick={async () => {
+          if (walletAddressID) {
+            // disconnect from the extension
+            await window.arweaveWallet.disconnect();
+            setWalletAddressID(null);
+            return;
+          }
+          if (!window.arweaveWallet?.connect) {
+            alert("Please install ArConnect");
+            return;
+          }
+          // connect to the extension
+          try {
+            await window.arweaveWallet.connect(
+              // request permissions to read the active address
+              ["ACCESS_ADDRESS", "SIGN_TRANSACTION", "DISPATCH"],
+              // provide some extra info for our app
+              {
+                name: "Trends",
+                // logo: "https://arweave.net/IvZQHCqSNVCTjqflozr_QaiuxVZrq2_GzRX3JeP88tY",
+              }
+            );
+          } catch (error) {
+            console.error(error);
+            return;
+          }
 
-        const userAddress = await window.arweaveWallet.getActiveAddress();
-        setWalletAddressID(userAddress);
-        onClickAction?.();
-        console.log(`Connected to ${userAddress}`);
-      }}
-    />
+          const userAddress = await window.arweaveWallet.getActiveAddress();
+          setWalletAddressID(userAddress);
+          onClickAction?.();
+          console.log(`Connected to ${userAddress}`);
+        }}
+      >
+        <Image src={"/arconnect.svg"} alt="ArConnect Logo" width={20} height={20} />
+        Connect Wallet
+      </Button>
+    </div>
   );
 }

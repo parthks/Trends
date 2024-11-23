@@ -1,7 +1,15 @@
 # read sam.json
 import json
 
-with open('sam.json', 'r') as f:
+output_filename = 'bigData/tweets.json'
+# input_filename = 'sam.json'
+input_filename = 'bigData/top9.json'
+
+def saveFile(data, filename):
+    with open(filename, 'w') as f:
+        json.dump(data, f)
+
+with open(input_filename, 'r') as f:
     data = json.load(f)
 
 # print(data)
@@ -36,5 +44,4 @@ for tweet in data:
     tweets.append(tweet_data)
 
 # write tweets to a file
-with open('tweets.json', 'w') as f:
-    json.dump(tweets, f)
+saveFile(tweets, output_filename)

@@ -12,10 +12,10 @@ export type TrendPreview = {
 };
 
 export type Trend = TrendPreview & {
-  byDate: ByDate;
+  byDay: ByDay;
 };
 
-type ByDate = {
+type ByDay = {
   [date: string]: {
     summary: string;
     comments: Comments;

@@ -10,6 +10,9 @@ from openai import OpenAI
 # Load environment variables
 load_dotenv()
 
+input_filename = 'bigData/tweets.json'
+output_filename = 'bigData/categorized.json'
+
 # Get API key from environment
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 if not OPENAI_API_KEY:
@@ -20,7 +23,7 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 def saveToFile(tweets):
-    with open('categorized.json', 'w') as file:
+    with open(output_filename, 'w') as file:
         json.dump(tweets, file) 
 
 
@@ -97,7 +100,7 @@ def getTopic(tweet):
                 "tags": {
                     "type": "array",
                     "items": {"type": "string"},
-                    "description": "List of categories that the tweet falls under."
+                    "description": "List of categories that the tweet falls under. Must be one or more of the categories listed above."
                 },
                 "explanation": {
                     "type": "string",
@@ -132,28 +135,30 @@ topics = [
 
 
 # import tweets.json
-with open('tweets.json', 'r') as file:
+with open(input_filename, 'r') as file:
     tweets = json.load(file)
 
 categorized_tweets = []
 try:
-    with open('categorized.json', 'r') as file:
+    with open(output_filename, 'r') as file:
         categorized_tweets = json.load(file)
 except:
     pass
 
+count = 0
 for tweet in tweets:
+    count += 1
     # if tweet in categorized_tweets skip
     if any(t['id'] == tweet['id'] for t in categorized_tweets):
         # print(f"Tweet {tweet['id']} already processed, skipping...")
         continue
-    time.sleep(1)
     tags_data = json.loads(getTopic(tweet))
     tweet['tags'] = tags_data['tags']
     tweet['explanation'] = tags_data['explanation']
     categorized_tweets.append(tweet) 
-    saveToFile(categorized_tweets) 
-    print(tweet['tags'])
+    if count % 10 == 0:
+        saveToFile(categorized_tweets) 
+    print(count, tweet['tags'])
     # Check each tag individually
     for tag in tweet['tags']:
         if tag not in topics:

@@ -1,5 +1,5 @@
 DATA = {
-["Technical Innovations"] = {
+["technical-innovations"] = {
 name = "Technical Innovations",
 slug = "technical-innovations",
 description = "Technical Innovations dives into the advancements and breakthroughs in blockchain technology. It covers topics like protocol updates, scalability solutions, security enhancements, and compliance innovations. Users should expect detailed explanations of technical progress and its implications for the broader ecosystem, offering a glimpse into the cutting edge of blockchain.",
@@ -1264,7 +1264,7 @@ tweets = {
 },
 },
 }},
-["Ecosystem Projects"] = {
+["ecosystem-projects"] = {
 name = "Ecosystem Projects",
 slug = "ecosystem-projects",
 description = "This category highlights projects within the blockchain ecosystem, from newly launched initiatives to established platforms innovating in the space. Users can expect updates on cutting-edge technologies, inspiring use cases, and detailed developer showcases. Whether it’s a new decentralized app, a groundbreaking protocol, or a novel use of blockchain, this section offers insights into the dynamic projects shaping the industry.",
@@ -3457,7 +3457,7 @@ tweets = {
 },
 },
 }},
-["Gaming on Blockchain"] = {
+["gaming-on-blockchain"] = {
 name = "Gaming on Blockchain",
 slug = "gaming-on-blockchain",
 description = "This section is dedicated to blockchain-based gaming, with a focus on play-to-earn opportunities, project updates, and reviews of popular blockchain games. Users can expect insights into the latest gaming technologies and trends, along with guides to maximize their gaming experience in the blockchain space.",
@@ -3815,7 +3815,7 @@ tweets = {
 },
 },
 }},
-["Community Events"] = {
+["community-events"] = {
 name = "Community Events",
 slug = "community-events",
 description = "Community Events focus on gatherings, both virtual and in-person, that bring blockchain enthusiasts together. From global conferences and hackathons to intimate webinars and community-driven meetups, this category provides updates on where and how to connect with like-minded individuals. Users can expect announcements about key events, opportunities to participate, and insights into past happenings.",
@@ -4804,7 +4804,7 @@ tweets = {
 },
 },
 }},
-["Market and Adoption Trends"] = {
+["market-and-adoption-trends"] = {
 name = "Market and Adoption Trends",
 slug = "market-and-adoption-trends",
 description = "This category tracks the pulse of the blockchain market, including tokenomics, ecosystem growth, and real-world applications. Users can expect analysis of adoption trends, insights into how blockchain is being used across industries, and updates on the overall health and trajectory of the market. It’s ideal for staying informed about where blockchain is heading.",
@@ -5325,7 +5325,7 @@ tweets = {
 },
 },
 }},
-["Developer Resources"] = {
+["developer-resources"] = {
 name = "Developer Resources",
 slug = "developer-resources",
 description = "Developer Resources is a hub for tools and support tailored to blockchain builders. This category includes APIs, SDKs, open-source projects, and funding opportunities like grants. Users can expect to find everything they need to start or enhance their blockchain development journey, along with tips and guidance from the community.",
@@ -6097,7 +6097,7 @@ tweets = {
 },
 },
 }},
-["Future of Blockchain"] = {
+["future-of-blockchain"] = {
 name = "Future of Blockchain",
 slug = "future-of-blockchain",
 description = "This forward-looking category explores predictions, trends, and visionary ideas about blockchain’s evolution. It features interviews with thought leaders, discussions about emerging technologies, and insights into the potential of cross-chain and multi-chain ecosystems. Users can expect thought-provoking content that sparks imagination about blockchain’s possibilities.",
@@ -6294,7 +6294,7 @@ tweets = {
 },
 },
 }},
-["Unknown"] = {
+["unknown"] = {
 name = "Unknown",
 slug = "unknown",
 description = "This category captures content that doesn’t fit into the predefined topics but might still be relevant or interesting. Users should expect miscellaneous updates, unexpected insights, or outlier discussions that defy categorization but add value to the overall blockchain narrative.",
@@ -6787,7 +6787,7 @@ tweets = {
 },
 },
 }},
-["Art and NFTs"] = {
+["art-and-nfts"] = {
 name = "Art and NFTs",
 slug = "art-and-nfts",
 description = "Art and NFTs explore the intersection of blockchain and creativity. This category highlights innovative NFT collections, trends in digital art, and collaborations across industries like gaming and the metaverse. Users can expect to discover unique art pieces, insights into the NFT market, and ways blockchain is redefining creative ownership.",
@@ -6907,7 +6907,7 @@ tweets = {
 },
 },
 }},
-["Knowledge Sharing"] = {
+["knowledge-sharing"] = {
 name = "Knowledge Sharing",
 slug = "knowledge-sharing",
 description = "This category is all about learning and growth. It features tutorials, educational content, and best practices aimed at helping users understand blockchain technology better. Whether you’re a beginner exploring blockchain for the first time or an expert looking to refine your skills, this section offers valuable resources and discussions that deepen your knowledge.",
@@ -7707,7 +7707,7 @@ tweets = {
 },
 },
 }},
-["Community Stories"] = {
+["community-stories"] = {
 name = "Community Stories",
 slug = "community-stories",
 description = "Community Stories celebrate the people and achievements within the blockchain ecosystem. This category features user testimonials, milestones, and inspirational accounts of contributors making a difference. Users can expect uplifting narratives that showcase the human side of blockchain.",
@@ -7802,7 +7802,7 @@ tweets = {
 },
 },
 }},
-["For Investors and Enthusiasts"] = {
+["for-investors-and-enthusiasts"] = {
 name = "For Investors and Enthusiasts",
 slug = "for-investors-and-enthusiasts",
 description = "This section caters to those interested in the financial and strategic aspects of blockchain. It covers token launches, staking guides, and investment opportunities, alongside market analysis to help users make informed decisions. Enthusiasts can also find updates on projects that are gaining traction and could be worth watching.",
@@ -8043,7 +8043,7 @@ tweets = {
 },
 },
 }},
-["Sustainability and Impact"] = {
+["sustainability-and-impact"] = {
 name = "Sustainability and Impact",
 slug = "sustainability-and-impact",
 description = "Sustainability and Impact cover projects leveraging blockchain for environmental and social good. This category highlights green initiatives, charitable efforts, and discussions about blockchain’s potential to drive sustainable development. Users can expect thought-provoking content on how the technology can contribute to a better world.",
@@ -8077,7 +8077,7 @@ tweets = {
 },
 },
 }},
-["For Enterprises"] = {
+["for-enterprises"] = {
 name = "For Enterprises",
 slug = "for-enterprises",
 description = "For Enterprises focuses on how blockchain is transforming businesses. It includes case studies of successful implementations, insights into enterprise integrations, and regulatory updates relevant to businesses exploring blockchain. Users can expect to learn how companies are leveraging blockchain to innovate and solve complex challenges.",
@@ -8104,7 +8104,7 @@ tweets = {
 },
 },
 }},
-["DAO Governance Updates"] = {
+["dao-governance-updates"] = {
 name = "DAO Governance Updates",
 slug = "dao-governance-updates",
 description = "This category centers on the evolving world of decentralized autonomous organizations (DAOs). It includes updates on governance proposals, voting processes, and insights into how DAOs are shaping decision-making in blockchain ecosystems. Users should expect guidance on participating in DAOs and highlights of active, impactful organizations.",
@@ -8172,7 +8172,7 @@ tweets = {
 },
 },
 }},
-["Education and Onboarding"] = {
+["education-and-onboarding"] = {
 name = "Education and Onboarding",
 slug = "education-and-onboarding",
 description = "Education and Onboarding is designed for newcomers and those looking to deepen their understanding of blockchain. It offers simplified guides, beginner-friendly resources, and step-by-step instructions for getting started in the ecosystem. Users can expect accessible, jargon-free content that helps them navigate the blockchain world with ease.",

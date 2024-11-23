@@ -9,8 +9,8 @@ type MessageResult = {
   Error?: unknown;
 };
 
-export type MyMessageResult = MessageResult & {
-  data: Record<string, unknown>;
+export type MyMessageResult<T> = MessageResult & {
+  data: T;
   status?: "Success" | "Error";
 };
 
@@ -32,7 +32,7 @@ export async function sendAndReceiveGameMessage({ tags, data, processId = Proces
   return handleResultData(resultData as MessageResult);
 }
 
-export async function sendDryRunGameMessage({ tags, processId = ProcessId.TRENDS }: { tags: { name: string; value: string }[]; processId?: ProcessId }) {
+export async function sendDryRunGameMessage<T>({ tags, processId = ProcessId.TRENDS }: { tags: { name: string; value: string }[]; processId?: ProcessId }) {
   const action = tags.find((tag) => tag.name === "Action")?.value;
   console.log("sending dry run message:" + action, { tags });
   const resultData = await dryrun({
@@ -42,11 +42,11 @@ export async function sendDryRunGameMessage({ tags, processId = ProcessId.TRENDS
   });
 
   console.log("got result: " + action, { resultData });
-  return handleResultData(resultData as MessageResult);
+  return handleResultData<T>(resultData as MessageResult);
 }
 
-function handleResultData(resultData: MessageResult): MyMessageResult {
-  const newResultData = { ...resultData, data: {}, status: undefined } as MyMessageResult;
+function handleResultData<T>(resultData: MessageResult): MyMessageResult<T> {
+  const newResultData = { ...resultData, data: {}, status: undefined } as MyMessageResult<T>;
 
   if (resultData.Messages?.length > 0) {
     const message = resultData.Messages[0];
@@ -59,7 +59,7 @@ function handleResultData(resultData: MessageResult): MyMessageResult {
       console.log("error parsing data", e);
     }
 
-    newResultData.data = data;
+    newResultData.data = data as T;
     if (status) {
       newResultData.status = status as "Success" | "Error";
       if (status === "Success") {
