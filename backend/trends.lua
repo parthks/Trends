@@ -3,6 +3,7 @@
     DATA Format
 {
     TrendName: {
+        "name": string,
         "slug": string,
         "description": string,
         "followers": {{address: string, created_at: string}},
@@ -11,6 +12,24 @@
         "total_upvotes": number,
         "num_updates": number,
         "last_updated": string,
+        "comments": {
+            id: {
+                id: string,
+                address: string,
+                comment: string,
+                upvotes: {address_string = {vote: number, created_at: string}},
+                total_upvotes: number,
+                replies: {
+                    id: {
+                        id: string,
+                        address: string,
+                        comment: string,
+                        upvotes: {address_string = {vote: number, created_at: string}},
+                        total_upvotes: number,
+                    }
+                }
+            }
+        },
         "byDay": {
             YYYY-MM-DD: {
                 "summary": string,
@@ -62,6 +81,10 @@ function _checkTrendExists(trend)
     return DATA[trend] ~= nil
 end
 
+function _sendError(msg, error)
+    msg.reply({ Status = "Error", Error = error })
+end
+
 local function getTrends(msg)
     local data = {}
     for trend, trendData in pairs(DATA) do
@@ -69,16 +92,35 @@ local function getTrends(msg)
         trendData.byDay = nil
         data[trend] = trendData
     end
-    msg.reply({ Data = data })
+    msg.reply({ Status = "Success", Data = data })
 end
 
 local function getTrend(msg)
     local trend = msg.Tags.Trend
     if not _checkTrendExists(trend) then
-        msg.reply({ Error = "Trend not found" })
+        _sendError(msg, "Trend not found")
         return
     end
-    msg.reply({ Data = DATA[trend] })
+    msg.reply({ Status = "Success", Data = DATA[trend] })
+end
+
+local function toggleFollowTrend(msg)
+    local trend = msg.Tags.Trend
+    local timestamp = msg.Timestamp
+    local from = msg.From
+
+    if not _checkTrendExists(trend) then
+        _sendError(msg, "Trend not found")
+        return
+    end
+    if DATA[trend].followers[from] ~= nil then
+        DATA[trend].followers[from] = nil
+        DATA[trend].total_followers = DATA[trend].total_followers - 1
+    else
+        DATA[trend].followers[from] = { created_at = timestamp }
+        DATA[trend].total_followers = DATA[trend].total_followers + 1
+    end
+    msg.reply({ Status = "Success" })
 end
 
 local function toggleUpVoteTrendUpdate(msg)
@@ -88,11 +130,11 @@ local function toggleUpVoteTrendUpdate(msg)
     local timestamp = msg.Timestamp
     local from = msg.From
     if not _checkTrendExists(trend) then
-        msg.reply({ Error = "Trend not found" })
+        _sendError(msg, "Trend not found")
         return
     end
     if DATA[trend].byDay[day] == nil then
-        msg.reply({ Error = "Day not found" })
+        _sendError(msg, "Day not found")
         return
     end
     local action = nil
@@ -105,7 +147,7 @@ local function toggleUpVoteTrendUpdate(msg)
         DATA[trend].byDay[day].upvotes[from] = { vote = vote, created_at = timestamp }
         DATA[trend].byDay[day].total_upvotes = DATA[trend].byDay[day].total_upvotes + vote
     end
-    msg.reply({ Success = true, UpVoteAction = action })
+    msg.reply({ Status = "Success", UpVoteAction = action })
 end
 
 local function toggleUpVoteTrend(msg)
@@ -123,7 +165,7 @@ local function toggleUpVoteTrend(msg)
         DATA[trend].upvotes[from] = { vote = vote, created_at = timestamp }
         DATA[trend].total_upvotes = DATA[trend].total_upvotes + vote
     end
-    msg.reply({ Success = true, UpVoteAction = action })
+    msg.reply({ Status = "Success", UpVoteAction = action })
 end
 
 local function addCommentToTrendUpdate(msg)
@@ -135,17 +177,17 @@ local function addCommentToTrendUpdate(msg)
     local from = msg.From
 
     if not _checkTrendExists(trend) then
-        msg.reply({ Error = "Trend not found" })
+        _sendError(msg, "Trend not found")
         return
     end
     if DATA[trend].byDay[day] == nil then
-        msg.reply({ Error = "Day not found" })
+        _sendError(msg, "Day not found")
         return
     end
 
     if commentID then
         if DATA[trend].byDay[day].comments[commentID] == nil then
-            msg.reply({ Error = "Comment not found" })
+            _sendError(msg, "Comment not found")
             return
         end
         -- Generate unique reply ID
@@ -173,6 +215,47 @@ local function addCommentToTrendUpdate(msg)
             replies = {}
         }
     end
+    msg.reply({ Status = "Success" })
+end
+
+local function addCommentToTrend(msg)
+    local trend = msg.Tags.Trend
+    local comment = msg.Tags.Comment
+    local commentID = msg.Tags.CommentID -- to reply to a comment
+    local timestamp = msg.Timestamp
+    local from = msg.From
+
+    if not _checkTrendExists(trend) then
+        _sendError(msg, "Trend not found")
+        return
+    end
+
+    DATA[trend].comments = DATA[trend].comments or {}
+
+    if commentID then
+        if DATA[trend].comments[commentID] == nil then
+            _sendError(msg, "Comment not found")
+            return
+        end
+
+        local newReplyID = commentID .. "-" .. os.time()
+        DATA[trend].comments[commentID].replies[newReplyID] = {
+            id = newReplyID,
+            comment = comment,
+            created_at = timestamp,
+            from = from
+        }
+    else
+        local newCommentID = "c-" .. os.time()
+        DATA[trend].comments[newCommentID] = {
+            id = newCommentID,
+            comment = comment,
+            created_at = timestamp,
+            from = from,
+            replies = {}
+        }
+    end
+    msg.reply({ Status = "Success" })
 end
 
 local function toggleUpVoteComment(msg)
@@ -185,28 +268,28 @@ local function toggleUpVoteComment(msg)
     local from = msg.From
 
     if not _checkTrendExists(trend) then
-        msg.reply({ Error = "Trend not found" })
+        _sendError(msg, "Trend not found")
         return
     end
     if DATA[trend].byDay[day] == nil then
-        msg.reply({ Error = "Day not found" })
+        _sendError(msg, "Day not found")
         return
     end
     if commentID then
         if DATA[trend].byDay[day].comments[commentID] == nil then
-            msg.reply({ Error = "Comment not found" })
+            _sendError(msg, "Comment not found")
             return
         end
     end
     if replyID then
         if DATA[trend].byDay[day].comments[commentID].replies[replyID] == nil then
-            msg.reply({ Error = "Reply not found" })
+            _sendError(msg, "Reply not found")
             return
         end
     end
 
     if not commentID and not replyID then
-        msg.reply({ Error = "No comment or reply ID provided" })
+        _sendError(msg, "No comment or reply ID provided")
         return
     end
 
@@ -243,12 +326,14 @@ local function toggleUpVoteComment(msg)
         end
     end
 
-    msg.reply({ Success = true, UpVoteAction = action })
+    msg.reply({ Status = "Success", UpVoteAction = action })
 end
 
 Handlers.add("GetTrends", { Action = "GetTrends" }, getTrends)
 Handlers.add("GetTrend", { Action = "GetTrend" }, getTrend)
+Handlers.add("ToggleFollowTrend", { Action = "ToggleFollowTrend" }, toggleFollowTrend)
 Handlers.add("ToggleUpVoteTrendUpdate", { Action = "ToggleUpVoteTrendUpdate" }, toggleUpVoteTrendUpdate)
 Handlers.add("ToggleUpVoteTrend", { Action = "ToggleUpVoteTrend" }, toggleUpVoteTrend)
 Handlers.add("AddCommentToTrendUpdate", { Action = "AddCommentToTrendUpdate" }, addCommentToTrendUpdate)
 Handlers.add("ToggleUpVoteComment", { Action = "ToggleUpVoteComment" }, toggleUpVoteComment)
+Handlers.add("AddCommentToTrend", { Action = "AddCommentToTrend" }, addCommentToTrend)

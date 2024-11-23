@@ -58,8 +58,8 @@ with open('summary.json', 'r') as file:
     tweets_by_tag_and_day = json.load(file)
 
 for tag, days in tweets_by_tag_and_day.items():
-    lua_table[tag] = {"slug": tag.replace(" ", "-").lower(), "description": topics[tag], "followers": {}, "upvotes": {}, "total_followers": 0, "total_upvotes": 0, "byDay": {}, "num_updates": len(days.keys()), "last_updated": list(days.keys())[-1]}
-    lua_table_text += f'["{tag}"] = {{\nslug = "{tag.replace(" ", "-").lower()}",\ndescription = "{topics[tag]}",\nfollowers = {{}},\nupvotes = {{}},\ntotal_followers = 0,\ntotal_upvotes = 0,\nnum_updates = {len(days.keys())},\nlast_updated = "{list(days.keys())[0]}",\nbyDay = {{\n'
+    lua_table[tag] = {"name": tag, "slug": tag.replace(" ", "-").lower(), "description": topics[tag], "followers": {}, "upvotes": {}, "comments": {}, "total_followers": 0, "total_upvotes": 0, "byDay": {}, "num_updates": len(days.keys()), "last_updated": list(days.keys())[-1]}
+    lua_table_text += f'["{tag}"] = {{\nname = "{tag}",\nslug = "{tag.replace(" ", "-").lower()}",\ndescription = "{topics[tag]}",\nfollowers = {{}},\nupvotes = {{}},\ncomments = {{}},\ntotal_followers = 0,\ntotal_upvotes = 0,\nnum_updates = {len(days.keys())},\nlast_updated = "{list(days.keys())[0]}",\nbyDay = {{\n'
     for day, tweets in days.items():
         lua_table[tag]["byDay"][day] = {}
         lua_table[tag]["byDay"][day]["tweets"] = []
