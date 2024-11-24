@@ -2,7 +2,29 @@ import CommunityTimeline from "@/components/TrendPage";
 import { Trend } from "@/utils/types";
 import { sendDryRunGameMessage } from "@/utils/wallet";
 
-export default async function TrendPage({ params }: { params: { trend: string } }) {
+export async function generateStaticParams() {
+  const topics = [
+    "Ecosystem Projects",
+    "Community Events",
+    "Knowledge Sharing",
+    "Technical Innovations",
+    "Market and Adoption Trends",
+    "Developer Resources",
+    "For Investors and Enthusiasts",
+    "For Enterprises",
+    "DAO Governance Updates",
+    "Community Stories",
+    "Art and NFTs",
+    "Gaming on Blockchain",
+    "Sustainability and Impact",
+    "Future of Blockchain",
+    "Education and Onboarding",
+    "Unknown",
+  ];
+  return topics.map((topic) => ({ trend: topic }));
+}
+
+export default async function TrendPage({ params }: { params: Promise<{ trend: string }> }) {
   const { trend } = await params;
   const data = await sendDryRunGameMessage<Trend>({
     tags: [
