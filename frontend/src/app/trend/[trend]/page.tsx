@@ -21,7 +21,8 @@ export async function generateStaticParams() {
     "Education and Onboarding",
     "Unknown",
   ];
-  return topics.map((topic) => ({ trend: topic }));
+  // slug = tag.replace(" ", "-").lower()
+  return topics.map((topic) => ({ trend: topic.replace(/\s+/g, "-").toLowerCase() }));
 }
 
 export default async function TrendPage({ params }: { params: Promise<{ trend: string }> }) {
