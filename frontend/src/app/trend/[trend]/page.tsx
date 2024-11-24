@@ -1,22 +1,21 @@
 import CommunityTimeline from "@/components/TrendPage";
-import TweetCard from "@/components/TweetCard";
 import { Trend } from "@/utils/types";
 import { sendDryRunGameMessage } from "@/utils/wallet";
 
 export default async function TrendPage({ params }: { params: { trend: string } }) {
+  const { trend } = await params;
   const data = await sendDryRunGameMessage<Trend>({
     tags: [
       { name: "Action", value: "GetTrend" },
       {
         name: "Trend",
-        value: params.trend,
+        value: trend,
       },
     ],
   });
 
   const trendData = data.data;
-  console.log(trendData);
-  const tweetId = trendData.byDay["2024-02-13"].tweets[0].id;
+  //   console.log(trendData);
 
   return (
     <div>

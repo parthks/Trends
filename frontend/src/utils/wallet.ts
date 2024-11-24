@@ -6,7 +6,7 @@ type MessageResult = {
   Output: unknown;
   Messages: { Tags: { name: string; value: string }[]; Data: string }[];
   Spawns: unknown[];
-  Error?: unknown;
+  Error?: string;
 };
 
 export type MyMessageResult<T> = MessageResult & {
@@ -14,7 +14,15 @@ export type MyMessageResult<T> = MessageResult & {
   status?: "Success" | "Error";
 };
 
-export async function sendAndReceiveGameMessage({ tags, data, processId = ProcessId.TRENDS }: { tags: { name: string; value: string }[]; data?: string; processId?: ProcessId }) {
+export async function sendAndReceiveGameMessage<T>({
+  tags,
+  data,
+  processId = ProcessId.TRENDS,
+}: {
+  tags: { name: string; value: string }[];
+  data?: string;
+  processId?: ProcessId;
+}) {
   const action = tags.find((tag) => tag.name === "Action")?.value;
   console.log("sending message:" + action, { tags, data });
   const res = await message({
@@ -29,7 +37,7 @@ export async function sendAndReceiveGameMessage({ tags, data, processId = Proces
   });
 
   console.log("got result: " + action, { resultData });
-  return handleResultData(resultData as MessageResult);
+  return handleResultData<T>(resultData as MessageResult);
 }
 
 export async function sendDryRunGameMessage<T>({ tags, processId = ProcessId.TRENDS }: { tags: { name: string; value: string }[]; processId?: ProcessId }) {
@@ -47,6 +55,9 @@ export async function sendDryRunGameMessage<T>({ tags, processId = ProcessId.TRE
 
 function handleResultData<T>(resultData: MessageResult): MyMessageResult<T> {
   const newResultData = { ...resultData, data: {}, status: undefined } as MyMessageResult<T>;
+  if (newResultData.Error) {
+    throw new Error(newResultData.Error);
+  }
 
   if (resultData.Messages?.length > 0) {
     const message = resultData.Messages[0];

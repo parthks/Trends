@@ -153,7 +153,10 @@ for tweet in tweets:
         # print(f"Tweet {tweet['id']} already processed, skipping...")
         continue
     tags_data = json.loads(getTopic(tweet))
-    tweet['tags'] = tags_data['tags']
+    tags = tags_data['tags']
+    # remove tags that are not in topics
+    tags = [tag for tag in tags if tag in topics]
+    tweet['tags'] = tags
     tweet['explanation'] = tags_data['explanation']
     categorized_tweets.append(tweet) 
     if count % 10 == 0:
@@ -165,7 +168,7 @@ for tweet in tweets:
             print(f"Topic '{tag}' not in allowed topics list")
             raise Exception(f"Topic '{tag}' not in allowed topics list")
 
-    
+saveToFile(categorized_tweets) 
 # show counts of each tag from tags of categorized_tweets
 
 # Count and display tag frequencies

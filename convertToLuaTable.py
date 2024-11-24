@@ -57,10 +57,35 @@ lua_table_text = "DATA = {\n"
 with open('summary.json', 'r') as file:
     tweets_by_tag_and_day = json.load(file)
 
+handles = {}
 for tag, days in tweets_by_tag_and_day.items():
-    lua_table[tag] = {"name": tag, "slug": tag.replace(" ", "-").lower(), "description": topics[tag], "followers": {}, "upvotes": {}, "comments": {}, "total_followers": 0, "total_upvotes": 0, "byDay": {}, "num_updates": len(days.keys()), "last_updated": list(days.keys())[-1]}
+    handles[tag] = {}
+    for day, tweets in days.items():
+        for tweet in tweets["tweets"]:
+            if 'retweetUser' in tweet:
+                if tweet["retweetUser"] not in handles[tag]:
+                    handles[tag][tweet["retweetUser"]] = {"handle": tweet["retweetUser"], "num_tweets": 0}
+                handles[tag][tweet["retweetUser"]]["num_tweets"] += 1
+
+            else:
+                if tweet["user"] not in handles[tag]:
+                    handles[tag][tweet["user"]] = {"handle": tweet["user"], "num_tweets": 0}
+                handles[tag][tweet["user"]]["num_tweets"] += 1
+
+
+for tag, days in tweets_by_tag_and_day.items():
+    handles_for_tag = handles[tag]
+    # sort handles by num_tweets
+    handles_for_tag = dict(sorted(handles_for_tag.items(), key=lambda x: x[1]["num_tweets"], reverse=True))
+
+    handles_dict_lua_text = "{"
+    for handle, data in handles_for_tag.items():
+        handles_dict_lua_text += f'["{handle}"] = {{handle = "{handle}", num_tweets = {data["num_tweets"]}}},'
+    handles_dict_lua_text += "}"
+
+    lua_table[tag] = {"name": tag, "handles": handles_for_tag, "slug": tag.replace(" ", "-").lower(), "description": topics[tag], "followers": {}, "upvotes": {}, "comments": {}, "total_followers": 0, "total_upvotes": 0, "byDay": {}, "num_updates": len(days.keys()), "last_updated": list(days.keys())[-1]}
     slug = tag.replace(" ", "-").lower()
-    lua_table_text += f'["{slug}"] = {{\nname = "{tag}",\nslug = "{slug}",\ndescription = "{topics[tag]}",\nfollowers = {{}},\nupvotes = {{}},\ncomments = {{}},\ntotal_followers = 0,\ntotal_upvotes = 0,\nnum_updates = {len(days.keys())},\nlast_updated = "{list(days.keys())[0]}",\nbyDay = {{\n'
+    lua_table_text += f'["{slug}"] = {{\nname = "{tag}",\nhandles = {handles_dict_lua_text},\nslug = "{slug}",\ndescription = "{topics[tag]}",\nfollowers = {{}},\nupvotes = {{}},\ncomments = {{}},\ntotal_followers = 0,\ntotal_upvotes = 0,\nnum_updates = {len(days.keys())},\nlast_updated = "{list(days.keys())[0]}",\nbyDay = {{\n'
     for day, tweets in days.items():
         lua_table[tag]["byDay"][day] = {}
         lua_table[tag]["byDay"][day]["tweets"] = []

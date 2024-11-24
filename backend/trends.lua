@@ -30,6 +30,12 @@
                 }
             }
         },
+        "handles": {
+            {
+                handle: string,
+                num_tweets: number
+            }
+        },
         "byDay": {
             YYYY-MM-DD: {
                 "summary": string,
@@ -199,7 +205,9 @@ local function addCommentToTrendUpdate(msg)
             id = replyID,
             comment = comment,
             created_at = timestamp,
-            from = from
+            from = from,
+            upvotes = {},
+            total_upvotes = 0
         }
     else
         -- Generate unique comment ID
@@ -212,10 +220,12 @@ local function addCommentToTrendUpdate(msg)
             comment = comment,
             created_at = timestamp,
             from = from,
-            replies = {}
+            replies = {},
+            upvotes = {},
+            total_upvotes = 0
         }
     end
-    msg.reply({ Status = "Success" })
+    msg.reply({ Status = "Success", Data = DATA[trend].byDay[day].comments })
 end
 
 local function addCommentToTrend(msg)
@@ -243,7 +253,9 @@ local function addCommentToTrend(msg)
             id = newReplyID,
             comment = comment,
             created_at = timestamp,
-            from = from
+            from = from,
+            upvotes = {},
+            total_upvotes = 0
         }
     else
         local newCommentID = "c-" .. os.time()
@@ -252,15 +264,17 @@ local function addCommentToTrend(msg)
             comment = comment,
             created_at = timestamp,
             from = from,
-            replies = {}
+            replies = {},
+            upvotes = {},
+            total_upvotes = 0
         }
     end
-    msg.reply({ Status = "Success" })
+    msg.reply({ Status = "Success", Data = DATA[trend].comments })
 end
 
 local function toggleUpVoteComment(msg)
     local trend = msg.Tags.Trend
-    local day = msg.Tags.Day
+    local day = msg.Tags.Day             -- to upvote a comment on an update, else upvoting Trend comment
     local commentID = msg.Tags.CommentID -- to upvote a comment
     local replyID = msg.Tags.ReplyID     -- to upvote a reply
     local vote = msg.Tags.Vote or 1
@@ -271,22 +285,6 @@ local function toggleUpVoteComment(msg)
         _sendError(msg, "Trend not found")
         return
     end
-    if DATA[trend].byDay[day] == nil then
-        _sendError(msg, "Day not found")
-        return
-    end
-    if commentID then
-        if DATA[trend].byDay[day].comments[commentID] == nil then
-            _sendError(msg, "Comment not found")
-            return
-        end
-    end
-    if replyID then
-        if DATA[trend].byDay[day].comments[commentID].replies[replyID] == nil then
-            _sendError(msg, "Reply not found")
-            return
-        end
-    end
 
     if not commentID and not replyID then
         _sendError(msg, "No comment or reply ID provided")
@@ -294,37 +292,111 @@ local function toggleUpVoteComment(msg)
     end
 
     local action = nil
-    if commentID then
-        if DATA[trend].byDay[day].comments[commentID].upvotes[from] ~= nil then
-            action = "removed " .. vote .. " upvote from comment"
-            DATA[trend].byDay[day].comments[commentID].upvotes[from] = nil
-            DATA[trend].byDay[day].comments[commentID].total_upvotes = DATA[trend].byDay[day].comments[commentID]
-                .total_upvotes - vote
+
+    -- if upvoting a comment (or reply) on an update
+    if day then
+        if DATA[trend].byDay[day] == nil then
+            _sendError(msg, "Day not found")
+            return
+        end
+        if DATA[trend].byDay[day].comments[commentID] == nil then
+            _sendError(msg, "Comment not found")
+            return
+        end
+        if replyID then
+            if DATA[trend].byDay[day].comments[commentID].replies[replyID] == nil then
+                _sendError(msg, "Reply not found")
+                return
+            end
+            DATA[trend].byDay[day].comments[commentID].replies[replyID].upvotes = DATA[trend].byDay[day].comments
+                [commentID].replies[replyID].upvotes or {}
+            if DATA[trend].byDay[day].comments[commentID].replies[replyID].upvotes[from] ~= nil then
+                action = "removed " .. vote .. " upvote from reply"
+                DATA[trend].byDay[day].comments[commentID].replies[replyID].upvotes[from] = nil
+                DATA[trend].byDay[day].comments[commentID].replies[replyID].total_upvotes = DATA[trend].byDay[day]
+                    .comments
+                    [commentID].replies[replyID].total_upvotes - vote
+            else
+                action = "added " .. vote .. " upvote to reply"
+                DATA[trend].byDay[day].comments[commentID].replies[replyID].upvotes[from] = {
+                    vote = vote,
+                    created_at =
+                        timestamp
+                }
+                DATA[trend].byDay[day].comments[commentID].replies[replyID].total_upvotes = DATA[trend].byDay[day]
+                    .comments
+                    [commentID].replies[replyID].total_upvotes + vote
+            end
         else
-            action = "added " .. vote .. " upvote to comment"
-            DATA[trend].byDay[day].comments[commentID].upvotes[from] = { vote = vote, created_at = timestamp }
-            DATA[trend].byDay[day].comments[commentID].total_upvotes = DATA[trend].byDay[day].comments[commentID]
-                .total_upvotes + vote
+            DATA[trend].byDay[day].comments[commentID].upvotes = DATA[trend].byDay[day].comments[commentID].upvotes or {}
+            if DATA[trend].byDay[day].comments[commentID].upvotes[from] ~= nil then
+                action = "removed " .. vote .. " upvote from comment"
+                DATA[trend].byDay[day].comments[commentID].upvotes[from] = nil
+                DATA[trend].byDay[day].comments[commentID].total_upvotes = DATA[trend].byDay[day].comments[commentID]
+                    .total_upvotes - vote
+            else
+                action = "added " .. vote .. " upvote to comment"
+                DATA[trend].byDay[day].comments[commentID].upvotes[from] = { vote = vote, created_at = timestamp }
+                DATA[trend].byDay[day].comments[commentID].total_upvotes = DATA[trend].byDay[day].comments[commentID]
+                    .total_upvotes + vote
+            end
+        end
+    else
+        -- if upvoting a trend comment
+        if DATA[trend].comments[commentID] == nil then
+            _sendError(msg, "Comment not found")
+            return
+        end
+        if DATA[trend].comments[commentID] == nil then
+            _sendError(msg, "Comment not found")
+            return
+        end
+
+        if replyID then
+            if DATA[trend].comments[commentID].replies[replyID] == nil then
+                _sendError(msg, "Reply not found")
+                return
+            end
+            DATA[trend].comments[commentID].replies[replyID].upvotes = DATA[trend].comments[commentID].replies[replyID]
+                .upvotes or {}
+            if DATA[trend].comments[commentID].replies[replyID].upvotes[from] ~= nil then
+                action = "removed " .. vote .. " upvote from reply"
+                DATA[trend].comments[commentID].replies[replyID].upvotes[from] = nil
+                DATA[trend].comments[commentID].replies[replyID].total_upvotes = DATA[trend].byDay[day]
+                    .comments
+                    [commentID].replies[replyID].total_upvotes - vote
+            else
+                action = "added " .. vote .. " upvote to reply"
+                DATA[trend].comments[commentID].replies[replyID].upvotes[from] = {
+                    vote = vote,
+                    created_at =
+                        timestamp
+                }
+                DATA[trend].comments[commentID].replies[replyID].total_upvotes = DATA[trend].byDay[day]
+                    .comments
+                    [commentID].replies[replyID].total_upvotes + vote
+            end
+        else
+            DATA[trend].comments[commentID].upvotes = DATA[trend].comments[commentID].upvotes or {}
+            if DATA[trend].comments[commentID].upvotes[from] ~= nil then
+                action = "removed " .. vote .. " upvote from comment"
+                DATA[trend].comments[commentID].upvotes[from] = nil
+                DATA[trend].comments[commentID].total_upvotes = DATA[trend].comments[commentID]
+                    .total_upvotes - vote
+            else
+                action = "added " .. vote .. " upvote to comment"
+                DATA[trend].comments[commentID].upvotes[from] = { vote = vote, created_at = timestamp }
+                DATA[trend].comments[commentID].total_upvotes = DATA[trend].comments[commentID]
+                    .total_upvotes + vote
+            end
         end
     end
 
-    if replyID then
-        if DATA[trend].byDay[day].comments[commentID].replies[replyID].upvotes[from] ~= nil then
-            action = "removed " .. vote .. " upvote from reply"
-            DATA[trend].byDay[day].comments[commentID].replies[replyID].upvotes[from] = nil
-            DATA[trend].byDay[day].comments[commentID].replies[replyID].total_upvotes = DATA[trend].byDay[day].comments
-                [commentID].replies[replyID].total_upvotes - vote
-        else
-            action = "added " .. vote .. " upvote to reply"
-            DATA[trend].byDay[day].comments[commentID].replies[replyID].upvotes[from] = {
-                vote = vote,
-                created_at =
-                    timestamp
-            }
-            DATA[trend].byDay[day].comments[commentID].replies[replyID].total_upvotes = DATA[trend].byDay[day].comments
-                [commentID].replies[replyID].total_upvotes + vote
-        end
-    end
+
+
+
+
+
 
     msg.reply({ Status = "Success", UpVoteAction = action })
 end

@@ -1,8 +1,13 @@
 import { Suspense } from "react";
 import { enrichTweet, type EnrichedTweet, type TweetProps, type TwitterComponents } from "react-tweet";
-import { getTweet, type Tweet } from "react-tweet/api";
+// import { getTweet, type Tweet } from "react-tweet/api";
+import { getTweet as _getTweet } from "react-tweet/api";
 
 import { cn } from "@/lib/utils";
+
+import { unstable_cache } from "next/cache";
+
+const getTweet = unstable_cache(async (id: string) => _getTweet(id), ["tweet"], { revalidate: 3600 * 24 });
 
 interface TwitterIconProps {
   className?: string;
@@ -60,12 +65,12 @@ export const TweetHeader = ({ tweet }: { tweet: EnrichedTweet }) => (
           height={48}
           width={48}
           src={tweet.user.profile_image_url_https}
-          className="overflow-hidden rounded-full border border-transparent"
+          className="size-12 min-w-12 overflow-hidden rounded-full border border-transparent object-cover"
         />
       </a>
       <div>
         <a href={tweet.user.url} target="_blank" rel="noreferrer" className="flex items-center whitespace-nowrap font-semibold">
-          {truncate(tweet.user.name, 20)}
+          {truncate(tweet.user.name, 18)}
           {tweet.user.verified || (tweet.user.is_blue_verified && <Verified className="ml-1 inline size-4 text-blue-500" />)}
         </a>
         <div className="flex items-center space-x-1">
@@ -83,7 +88,7 @@ export const TweetHeader = ({ tweet }: { tweet: EnrichedTweet }) => (
 );
 
 export const TweetBody = ({ tweet }: { tweet: EnrichedTweet }) => (
-  <div className="break-words leading-normal tracking-tighter">
+  <div className="break-words leading-normal tracking-tighter line-clamp-2">
     {tweet.entities.map((entity, idx) => {
       switch (entity.type) {
         case "url":

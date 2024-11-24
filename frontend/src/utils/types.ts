@@ -2,6 +2,7 @@ export type TrendPreview = {
   name: string;
   slug: string;
   description: string;
+  handles: Record<string, { handle: string; num_tweets: number }>;
   upvotes: Upvotes;
   total_upvotes: number;
   last_updated: string;
@@ -16,21 +17,23 @@ export type Trend = TrendPreview & {
 };
 
 type ByDay = {
-  [date: string]: {
-    summary: string;
-    comments: Comments;
-    upvotes: Upvotes;
-    total_upvotes: number;
-    tweets: {
-      id: string;
-      handle: string;
-    }[];
-  };
+  [date: string]: TrendUpdate;
 };
 
-type Upvotes = Record<string, { created_at: string; vote: number }>;
+export type TrendUpdate = {
+  summary: string;
+  comments: Comments;
+  upvotes: Upvotes;
+  total_upvotes: number;
+  tweets: {
+    id: string;
+    handle: string;
+  }[];
+};
 
-type Comments = Record<
+export type Upvotes = Record<string, { created_at: string; vote: number }>;
+
+export type Comments = Record<
   string,
   Comment & {
     replies: Replies;
