@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import { enrichTweet, type EnrichedTweet, type TweetProps, type TwitterComponents } from "react-tweet";
+import { enrichTweet, type TwitterComponents, type EnrichedTweet, type TweetProps } from "react-tweet";
 // import { getTweet, type Tweet } from "react-tweet/api";
-import { getTweet as _getTweet } from "react-tweet/api";
+import { getTweet as _getTweet, Tweet } from "react-tweet/api";
 
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,7 @@ const getTweet = unstable_cache(async (id: string) => _getTweet(id), ["tweet"], 
 
 interface TwitterIconProps {
   className?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 const Twitter = ({ className, ...props }: TwitterIconProps) => (
   <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 24 24" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg" className={className} {...props}>
@@ -39,7 +39,7 @@ const Skeleton = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
   return <div className={cn("rounded-md bg-primary/10", className)} {...props} />;
 };
 
-export const TweetSkeleton = ({ className, ...props }: { className?: string; [key: string]: any }) => (
+export const TweetSkeleton = ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
   <div className={cn("flex size-full max-h-max min-w-72 flex-col gap-2 rounded-lg border p-4", className)} {...props}>
     <div className="flex flex-row gap-2">
       <Skeleton className="size-10 shrink-0 rounded-full" />
@@ -49,7 +49,7 @@ export const TweetSkeleton = ({ className, ...props }: { className?: string; [ke
   </div>
 );
 
-export const TweetNotFound = ({ className, ...props }: { className?: string; [key: string]: any }) => (
+export const TweetNotFound = ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
   <div className={cn("flex size-full flex-col items-center justify-center gap-2 rounded-lg border p-4", className)} {...props}>
     <h3>Tweet not found</h3>
   </div>
@@ -132,10 +132,10 @@ export const TweetMedia = ({ tweet }: { tweet: EnrichedTweet }) => (
     )}
     {!tweet.video &&
       !tweet.photos &&
-      // @ts-ignore
+      // @ts-expect-error - boilerplate from magicUI
       tweet?.card?.binding_values?.thumbnail_image_large?.image_value.url && (
         <img
-          // @ts-ignore
+          // @ts-expect-error - boilerplate from magicUI
           src={tweet.card.binding_values.thumbnail_image_large.image_value.url}
           className="h-64 rounded-xl border object-cover shadow-sm"
         />
@@ -158,9 +158,15 @@ export const MagicTweet = ({
   const enrichedTweet = enrichTweet(tweet);
   return (
     <div className={cn("relative flex size-full max-w-lg flex-col gap-2 overflow-hidden rounded-lg border p-4 backdrop-blur-md", className)} {...props}>
-      <TweetHeader tweet={enrichedTweet} />
-      <TweetBody tweet={enrichedTweet} />
-      {renderMedia && <TweetMedia tweet={enrichedTweet} />}
+      {components && components.TweetNotFound ? (
+        <components.TweetNotFound />
+      ) : (
+        <>
+          <TweetHeader tweet={enrichedTweet} />
+          <TweetBody tweet={enrichedTweet} />
+          {renderMedia && <TweetMedia tweet={enrichedTweet} />}
+        </>
+      )}
     </div>
   );
 };
