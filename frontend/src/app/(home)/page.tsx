@@ -25,7 +25,7 @@ async function HomeContent() {
     "Sustainability and Impact",
     "Future of Blockchain",
     "Education and Onboarding",
-    "Unknown",
+    // "Unknown",
   ];
 
   // arrange the trends data by the topics index position
@@ -37,7 +37,7 @@ async function HomeContent() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-8 text-center">Trending Topics</h1>
+      <h1 className="text-3xl font-bold mb-8 text-left">Trending Topics</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {trends.map((trend, index) => {
           let className = "h-full";

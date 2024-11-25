@@ -19,7 +19,7 @@ export async function generateStaticParams() {
     "Sustainability and Impact",
     "Future of Blockchain",
     "Education and Onboarding",
-    "Unknown",
+    // "Unknown",
   ];
   // slug = tag.replace(" ", "-").lower()
   return topics.map((topic) => ({ trend: topic.replace(/\s+/g, "-").toLowerCase() }));

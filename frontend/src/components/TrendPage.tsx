@@ -28,7 +28,7 @@ export default function TrendPage({ trendData }: { trendData: Trend }) {
     <div className="container mx-auto p-4 w-full flex-1 flex flex-col">
       <div className="grid md:grid-cols-12 gap-8 h-[calc(100vh-8rem)]">
         {/* Left Column - Main Content */}
-        <div className="col-span-6 overflow-y-auto pr-4">
+        <div className="col-span-5 overflow-y-auto pr-4">
           <div className="space-y-6">
             <h1 className="text-4xl font-bold">{trendData.name}</h1>
             <div className="flex items-center gap-4">
@@ -60,7 +60,7 @@ export default function TrendPage({ trendData }: { trendData: Trend }) {
         </div>
 
         {/* Right Column - Timeline */}
-        <div className="col-span-6 overflow-y-auto pr-4">
+        <div className="col-span-7 overflow-y-auto pr-4">
           <div className="space-y-8">
             <h2 className="text-2xl font-bold">Timeline</h2>
             {sortedByDate.map(([date, update]) => (
