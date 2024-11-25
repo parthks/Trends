@@ -4,12 +4,13 @@ import { sendDryRunGameMessage } from "@/utils/wallet";
 import type { Metadata } from "next";
 
 type Props = {
-  params: Promise<{ trend: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  params: { trend: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 };
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // read route params
-  const trend = (await params).trend;
+  const trend = params.trend;
   const trends = {
     "ecosystem-projects": {
       title: "Ecosystem Projects",
@@ -134,7 +135,6 @@ export default async function TrendPage({ params }: { params: Promise<{ trend: s
   });
 
   const trendData = data.data;
-  //   console.log(trendData);
 
   return (
     <div>

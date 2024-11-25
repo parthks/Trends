@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 // Create a separate component for the main content
 async function HomeContent() {
   const data = await sendDryRunGameMessage<Record<string, TrendPreview>>({ tags: [{ name: "Action", value: "GetTrends" }] });
-  console.log(data);
 
   const topics = [
     "Ecosystem Projects",

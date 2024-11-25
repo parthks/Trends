@@ -29,6 +29,7 @@ export type TrendUpdate = {
   tweets: {
     id: string;
     handle: string;
+    total_likes: number;
   }[];
 };
 

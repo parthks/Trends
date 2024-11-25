@@ -5,6 +5,7 @@
     TrendName: {
         "name": string,
         "slug": string,
+        "views": number,
         "description": string,
         "followers": {{address: string, created_at: string}},
         "total_followers": number,
@@ -33,7 +34,8 @@
         "handles": {
             {
                 handle: string,
-                num_tweets: number
+                num_tweets: number,
+                total_likes: number,
             }
         },
         "byDay": {
@@ -382,13 +384,18 @@ local function toggleUpVoteComment(msg)
         end
     end
 
-
-
-
-
-
-
     msg.reply({ Status = "Success", UpVoteAction = action })
+end
+
+local function updateViewCount(msg)
+    local trend = msg.Tags.Trend
+    if not _checkTrendExists(trend) then
+        _sendError(msg, "Trend not found")
+        return
+    end
+    DATA[trend].total_views = DATA[trend].total_views or 0
+    DATA[trend].total_views = DATA[trend].total_views + 1
+    msg.reply({ Status = "Success" })
 end
 
 Handlers.add("GetTrends", { Action = "GetTrends" }, getTrends)
@@ -399,3 +406,4 @@ Handlers.add("ToggleUpVoteTrend", { Action = "ToggleUpVoteTrend" }, toggleUpVote
 Handlers.add("AddCommentToTrendUpdate", { Action = "AddCommentToTrendUpdate" }, addCommentToTrendUpdate)
 Handlers.add("ToggleUpVoteComment", { Action = "ToggleUpVoteComment" }, toggleUpVoteComment)
 Handlers.add("AddCommentToTrend", { Action = "AddCommentToTrend" }, addCommentToTrend)
+Handlers.add("UpdateViewCount", { Action = "UpdateViewCount" }, updateViewCount)

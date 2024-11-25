@@ -1,6 +1,6 @@
 "use client";
 
-import { toggleTrendLike } from "@/lib/clientActions";
+import { toggleTrendLike, updateViewCount } from "@/lib/clientActions";
 import { useAppStore } from "@/store/useAppStore";
 import { Upvotes } from "@/utils/types";
 import { IconArrowBadgeUp } from "@tabler/icons-react";
@@ -13,6 +13,13 @@ export default function TrendLikeButton({ initialLikes, trend, upvotes }: { init
   const [likes, setLikes] = useState(initialLikes);
   const [userLiked, setUserLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (trend) {
+      console.log("updating view count");
+      updateViewCount(trend);
+    }
+  }, [trend]);
 
   useEffect(() => {
     if (walletAddressID) {

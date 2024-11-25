@@ -83,22 +83,26 @@ for tag, days in tweets_by_tag_and_day.items():
         handles_dict_lua_text += f'["{handle}"] = {{handle = "{handle}", num_tweets = {data["num_tweets"]}}},'
     handles_dict_lua_text += "}"
 
-    lua_table[tag] = {"name": tag, "handles": handles_for_tag, "slug": tag.replace(" ", "-").lower(), "description": topics[tag], "followers": {}, "upvotes": {}, "comments": {}, "total_followers": 0, "total_upvotes": 0, "byDay": {}, "num_updates": len(days.keys()), "last_updated": list(days.keys())[-1]}
+    lua_table[tag] = {"name": tag, "handles": handles_for_tag, "slug": tag.replace(" ", "-").lower(), "description": topics[tag], "followers": {}, "upvotes": {}, "comments": {}, "total_followers": 0, "total_upvotes": 0, "total_views": 0, "byDay": {}, "num_updates": len(days.keys()), "last_updated": list(days.keys())[-1]}
     slug = tag.replace(" ", "-").lower()
-    lua_table_text += f'["{slug}"] = {{\nname = "{tag}",\nhandles = {handles_dict_lua_text},\nslug = "{slug}",\ndescription = "{topics[tag]}",\nfollowers = {{}},\nupvotes = {{}},\ncomments = {{}},\ntotal_followers = 0,\ntotal_upvotes = 0,\nnum_updates = {len(days.keys())},\nlast_updated = "{list(days.keys())[0]}",\nbyDay = {{\n'
+    lua_table_text += f'["{slug}"] = {{\nname = "{tag}",\nhandles = {handles_dict_lua_text},\nslug = "{slug}",\ndescription = "{topics[tag]}",\nfollowers = {{}},\nupvotes = {{}},\ncomments = {{}},\ntotal_followers = 0,\ntotal_upvotes = 0,\ntotal_views = 0,\nnum_updates = {len(days.keys())},\nlast_updated = "{list(days.keys())[0]}",\nbyDay = {{\n'
     for day, tweets in days.items():
         lua_table[tag]["byDay"][day] = {}
         lua_table[tag]["byDay"][day]["tweets"] = []
         lua_table[tag]["byDay"][day]["summary"] = tweets["summary"]
         lua_table[tag]["byDay"][day]["upvotes"] = {}
         lua_table[tag]["byDay"][day]["total_upvotes"] = 0
-        lua_table_text += f'["{day}"] = {{summary = [[{tweets["summary"]}]],\nupvotes = {{}},\ntotal_upvotes = 0,\ntweets = {{\n'
+        total_likes = 0
+        for tweet in tweets["tweets"]:
+            total_likes += tweet["likeCount"]
+        lua_table_text += f'["{day}"] = {{summary = [[{tweets["summary"]}]],\nupvotes = {{}},\ntotal_upvotes = {total_likes},\ntweets = {{\n'
         for tweet in tweets["tweets"]:
             lua_table[tag]["byDay"][day]["tweets"].append({
                 "id": tweet["id"],
                 "handle": tweet["user"],
+                "total_likes": tweet["likeCount"],
             })
-            lua_table_text += f'{{id = "{tweet["id"]}", handle = "{tweet["user"]}"}},\n'
+            lua_table_text += f'{{id = "{tweet["id"]}", handle = "{tweet["user"]}", total_likes = {tweet["likeCount"]}}},\n'
         lua_table_text += "},\n"
         lua_table_text += "},\n"
     lua_table_text += "}},\n"

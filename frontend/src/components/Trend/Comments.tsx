@@ -8,6 +8,7 @@ import TimeAgoText from "../TimeAgoTex";
 import UpdateLikeButton from "./UpdateLikeButton";
 import { useAppStore } from "@/store/useAppStore";
 import { IconMessageCircle } from "@tabler/icons-react";
+// import emojiData from "@emoji-mart/data";
 
 type CommentsProps = {
   initialComments: Comments;
@@ -34,15 +35,31 @@ function CommentInput({ trendSlug, setComments }: { trendSlug: string; setCommen
   const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [comment, setComment] = useState("");
+  // const [emojiSearch, setEmojiSearch] = useState('');
+  // const [showEmojiSuggestions, setShowEmojiSuggestions] = useState(false);
+  // const [cursorPosition, setCursorPosition] = useState(0);
+
+  // // Filter emojis based on search
+  // const filteredEmojis = emojiSearch
+  //   ? Object.values(emojiData.emojis).filter((emoji: any) =>
+  //       emoji.keywords.some((k: string) => k.includes(emojiSearch.toLowerCase())) ||
+  //       emoji.name.includes(emojiSearch.toLowerCase())
+  //     ).slice(0, 5)
+  //   : [];
 
   return (
-    <div className="flex gap-2 mb-8">
+    <div className="flex gap-2 mb-8 relative">
       <Input
         placeholder="Join the board discussion..."
         disabled={!walletAddressID || isLoading}
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         onFocus={() => setIsFocused(true)}
+        // onKeyDown={(e) => {
+        //   if (e.key === ":") {
+        //     setShowEmojiPicker(true);
+        //   }
+        // }}
         onBlur={(e) => {
           // Only unfocus if clicking outside both input and button
           if (!e.relatedTarget?.classList.contains("submit-btn")) {
@@ -50,11 +67,13 @@ function CommentInput({ trendSlug, setComments }: { trendSlug: string; setCommen
           }
         }}
       />
-      {isFocused && (
+      {(isFocused || isLoading) && (
         <Button
+          className="submit-btn"
           disabled={!walletAddressID || isLoading}
           variant="secondary"
           onClick={async () => {
+            if (comment.length === 0) return;
             setIsLoading(true);
             const data = await addTrendComment<Comments>(trendSlug, comment);
             setComments(data);
@@ -72,7 +91,6 @@ function CommentInput({ trendSlug, setComments }: { trendSlug: string; setCommen
 function Comment({ setComments, comment, trendSlug }: { setComments: Dispatch<SetStateAction<Comments>>; comment: Comments[string]; trendSlug: string }) {
   const [isReplying, setIsReplying] = useState(false);
   const replyInputRef = useRef<HTMLDivElement>(null);
-  console.log(comment);
 
   useEffect(() => {
     if (isReplying && replyInputRef.current) {

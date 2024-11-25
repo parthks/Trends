@@ -29,7 +29,6 @@ function MyConnectButton() {
   const address = useActiveAddress();
 
   useEffect(() => {
-    console.log(connected);
     setWalletAddressID(connected ? address ?? null : null);
   }, [connected, address, setWalletAddressID]);
 

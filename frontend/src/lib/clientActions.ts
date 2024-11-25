@@ -1,5 +1,14 @@
 import { sendAndReceiveGameMessage } from "@/utils/wallet";
 
+export async function updateViewCount(trend: string) {
+  await sendAndReceiveGameMessage({
+    tags: [
+      { name: "Action", value: "UpdateViewCount" },
+      { name: "Trend", value: trend },
+    ],
+  });
+}
+
 export async function toggleTrendLike(trend: string) {
   const data = await sendAndReceiveGameMessage({
     tags: [
