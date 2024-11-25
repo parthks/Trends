@@ -22,12 +22,12 @@ export default function TimelineEntry({ date, update, trendSlug }: { date: strin
   const summaryWithLineBreaks = summaryWithLinks.replace(/\n/g, "<br />");
 
   return (
-    <div className="flex gap-4 max-w-full">
+    <div className="flex gap-4 max-w-full min-w-0">
       <div className="flex flex-col items-center min-w-[65px]">
         <div className="text-4xl font-bold text-muted-foreground">{day}</div>
         <div className="text-sm text-muted-foreground">{month}</div>
       </div>
-      <Card style={{ width: "calc(100% - 65px)" }} className="p-4 flex-1">
+      <Card style={{ width: "calc(100% - 65px)" }} className="p-4 flex-1 min-w-0">
         <p className="mb-4" dangerouslySetInnerHTML={{ __html: summaryWithLineBreaks }}></p>
         <p className="text-sm font-bold">Trending Messages</p>
         <div className="w-full overflow-x-auto pb-2">
