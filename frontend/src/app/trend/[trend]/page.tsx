@@ -91,11 +91,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
   };
 
+  // Add null check and default values
+  const trendData = trends[trend as keyof typeof trends] ?? {
+    title: "Explore Trends",
+    description: "Explore the latest trends from around the world.",
+    image: "https://arweave.net/MTGE99QY0JKfhu1rBkEylYCscQPFw83skwAMghzJEFM",
+  };
+
   return {
-    title: trends[trend as keyof typeof trends]?.title ?? "Explore Trends",
-    description: trends[trend as keyof typeof trends]?.description ?? "Explore the latest trends from around the world.",
+    title: trendData.title,
+    description: trendData.description,
     openGraph: {
-      images: [trends[trend as keyof typeof trends].image],
+      title: trendData.title,
+      description: trendData.description,
+      images: [trendData.image],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: trendData.title,
+      description: trendData.description,
+      images: [trendData.image],
     },
   };
 }
