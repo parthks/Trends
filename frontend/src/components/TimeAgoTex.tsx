@@ -10,7 +10,7 @@ export default function TimeAgoText({ date }: { date: string }) {
     // Calculate time difference in milliseconds
     const getIntervalTime = () => {
       const diff = Date.now() - new Date(date).getTime();
-      return diff < 60000 ? 1000 : 60000; // 1s if < 1min, else 1min
+      return diff < 60000 ? 10000 : 60000; // 10s if < 1min, else 1min
     };
 
     const updateTime = () => {

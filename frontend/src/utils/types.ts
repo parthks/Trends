@@ -44,7 +44,7 @@ type Replies = Record<string, Comment>;
 
 type Comment = {
   id: string;
-  address: string;
+  from: string;
   upvotes: Upvotes;
   total_upvotes: number;
   created_at: string;

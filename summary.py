@@ -10,6 +10,12 @@ from openai import OpenAI
 # Load environment variables
 load_dotenv()
 
+
+input_filename = 'bigData/tweets.json'
+categorized_filename = 'bigData/categorized.json'
+output_filename = 'bigData/summary.json'
+
+
 # Get API key from environment
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 if not OPENAI_API_KEY:
@@ -18,14 +24,14 @@ if not OPENAI_API_KEY:
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 def saveToFile(data):
-    with open('summary.json', 'w') as file:
+    with open(output_filename, 'w') as file:
         json.dump(data, file) 
 
 
 tweets = []
 tweets_by_tag = {}
 # import categorized.json
-with open('categorized.json', 'r') as file:
+with open(categorized_filename, 'r') as file:
     tweets = json.load(file)
 
 # get tweets by tag
@@ -37,7 +43,7 @@ for tweet in tweets:
 tweets_by_tag_and_day = {}
 # import summary.json
 try:
-    with open('summary.json', 'r') as summary_file:
+    with open(output_filename, 'r') as summary_file:
         tweets_by_tag_and_day = json.load(summary_file)
 except:
     tweets_by_tag_and_day = {}
@@ -59,13 +65,6 @@ except:
     saveToFile(tweets_by_tag_and_day)
 
 
-
-# display the count distribution of number of tweets per day for each tag
-# for tag, days in tweets_by_tag_and_day.items():
-#     print(f"\nTag: {tag}")
-#     print("Date Distribution:")
-#     for day, tweets in sorted(days.items()):
-#         print(f"  {day}: {len(tweets)} tweets")
 
 
 
@@ -115,7 +114,6 @@ Focus on delivering a concise, actionable summary without unnecessary openings o
     )
     return response.choices[0].message.content
 
-
 previousDaySummary = "NULL"
 for tag, days in tweets_by_tag_and_day.items():
     for day, tweets in days.items():
@@ -132,7 +130,7 @@ for tag, days in tweets_by_tag_and_day.items():
 
 
 all_tweets = []
-with open('tweets.json', 'r') as file:
+with open(input_filename, 'r') as file:
     all_tweets = json.load(file)
 
 # add likeCount to tweets in tweets_by_tag_and_day

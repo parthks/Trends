@@ -15,14 +15,14 @@
         "comments": {
             id: {
                 id: string,
-                address: string,
+                from: string,
                 comment: string,
                 upvotes: {address_string = {vote: number, created_at: string}},
                 total_upvotes: number,
                 replies: {
                     id: {
                         id: string,
-                        address: string,
+                        from: string,
                         comment: string,
                         upvotes: {address_string = {vote: number, created_at: string}},
                         total_upvotes: number,
@@ -248,7 +248,7 @@ local function addCommentToTrend(msg)
             return
         end
 
-        local newReplyID = commentID .. "-" .. os.time()
+        local newReplyID = commentID .. "-" .. getTableLength(DATA[trend].comments[commentID].replies) + 1
         DATA[trend].comments[commentID].replies[newReplyID] = {
             id = newReplyID,
             comment = comment,
@@ -258,7 +258,7 @@ local function addCommentToTrend(msg)
             total_upvotes = 0
         }
     else
-        local newCommentID = "c-" .. os.time()
+        local newCommentID = "c-" .. getTableLength(DATA[trend].comments) + 1
         DATA[trend].comments[newCommentID] = {
             id = newCommentID,
             comment = comment,
@@ -347,11 +347,6 @@ local function toggleUpVoteComment(msg)
             _sendError(msg, "Comment not found")
             return
         end
-        if DATA[trend].comments[commentID] == nil then
-            _sendError(msg, "Comment not found")
-            return
-        end
-
         if replyID then
             if DATA[trend].comments[commentID].replies[replyID] == nil then
                 _sendError(msg, "Reply not found")
@@ -362,32 +357,27 @@ local function toggleUpVoteComment(msg)
             if DATA[trend].comments[commentID].replies[replyID].upvotes[from] ~= nil then
                 action = "removed " .. vote .. " upvote from reply"
                 DATA[trend].comments[commentID].replies[replyID].upvotes[from] = nil
-                DATA[trend].comments[commentID].replies[replyID].total_upvotes = DATA[trend].byDay[day]
-                    .comments
-                    [commentID].replies[replyID].total_upvotes - vote
+                DATA[trend].comments[commentID].replies[replyID].total_upvotes = DATA[trend].comments[commentID]
+                    .replies[replyID].total_upvotes - vote
             else
                 action = "added " .. vote .. " upvote to reply"
                 DATA[trend].comments[commentID].replies[replyID].upvotes[from] = {
                     vote = vote,
-                    created_at =
-                        timestamp
+                    created_at = timestamp
                 }
-                DATA[trend].comments[commentID].replies[replyID].total_upvotes = DATA[trend].byDay[day]
-                    .comments
-                    [commentID].replies[replyID].total_upvotes + vote
+                DATA[trend].comments[commentID].replies[replyID].total_upvotes = DATA[trend].comments[commentID]
+                    .replies[replyID].total_upvotes + vote
             end
         else
             DATA[trend].comments[commentID].upvotes = DATA[trend].comments[commentID].upvotes or {}
             if DATA[trend].comments[commentID].upvotes[from] ~= nil then
                 action = "removed " .. vote .. " upvote from comment"
                 DATA[trend].comments[commentID].upvotes[from] = nil
-                DATA[trend].comments[commentID].total_upvotes = DATA[trend].comments[commentID]
-                    .total_upvotes - vote
+                DATA[trend].comments[commentID].total_upvotes = DATA[trend].comments[commentID].total_upvotes - vote
             else
                 action = "added " .. vote .. " upvote to comment"
                 DATA[trend].comments[commentID].upvotes[from] = { vote = vote, created_at = timestamp }
-                DATA[trend].comments[commentID].total_upvotes = DATA[trend].comments[commentID]
-                    .total_upvotes + vote
+                DATA[trend].comments[commentID].total_upvotes = DATA[trend].comments[commentID].total_upvotes + vote
             end
         end
     end
