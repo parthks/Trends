@@ -7,6 +7,7 @@ type Props = {
   params: { trend: string };
   searchParams: { [key: string]: string | string[] | undefined };
 };
+export const revalidate = 0; // Disable caching for this route segment
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // read route params

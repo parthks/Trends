@@ -6,6 +6,8 @@ import Loading from "./loading";
 import Link from "next/link";
 import { IconTrendingUp } from "@tabler/icons-react";
 
+export const revalidate = 0; // Disable caching for this route segment
+
 import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Trends",
