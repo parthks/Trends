@@ -24,8 +24,11 @@ const uploadDataWithTags = async () => {
   const irys = await getIrys();
   const dataToUpload = 'Hello, Arweave with tags!';
   const tags = [
-    { name: 'Application', value: 'TrendAR' }, 
+    { name: 'Application', value: 'Test' }, 
     { name: 'Version', value: '1' },
+    { name: 'Tags-Array', value: "['Test', 'Test2']" },
+    { name: 'Tags', value: 'Test1' },
+    { name: 'Tags', value: 'Test2' },
     { name: 'Content-Type', value: 'application/json' }, 
     { name: 'Tweet-ID', value: '1234567890' },
     { name: 'Author-ID', value: '409642632' },

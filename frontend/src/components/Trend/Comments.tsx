@@ -3,7 +3,7 @@ import { Card } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Comments } from "@/utils/types";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { addTrendComment } from "@/lib/clientActions";
 import TimeAgoText from "../TimeAgoTex";
 import UpdateLikeButton from "./UpdateLikeButton";
@@ -23,7 +23,7 @@ export default function TrendComments({ initialComments, trendSlug }: CommentsPr
     <Card className="p-4">
       <CommentInput setComments={setComments} trendSlug={trendSlug} />
       {sortedComments.map(([key, comment]) => (
-        <Comment trendSlug={trendSlug} comment={comment} key={key} />
+        <Comment setComments={setComments} trendSlug={trendSlug} comment={comment} key={key} />
       ))}
     </Card>
   );
@@ -70,13 +70,23 @@ function CommentInput({ trendSlug, setComments }: { trendSlug: string; setCommen
   );
 }
 
-function Comment({ comment, trendSlug }: { comment: Comments[string]; trendSlug: string }) {
+function Comment({ setComments, comment, trendSlug }: { setComments: Dispatch<SetStateAction<Comments>>; comment: Comments[string]; trendSlug: string }) {
+  const [isReplying, setIsReplying] = useState(false);
+  const replyInputRef = useRef<HTMLDivElement>(null);
+  console.log(comment);
+
+  useEffect(() => {
+    if (isReplying && replyInputRef.current) {
+      replyInputRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [isReplying]);
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-medium">{comment.address}</span>
+            <span className="font-medium text-muted-foreground">{`${comment.from.slice(0, 4)}...${comment.from.slice(-4)}`}</span>
             <span className="text-sm text-muted-foreground">{<TimeAgoText date={comment.created_at} />}</span>
           </div>
         </div>
@@ -84,7 +94,7 @@ function Comment({ comment, trendSlug }: { comment: Comments[string]; trendSlug:
         <div className="flex items-center gap-4 text-sm">
           <UpdateLikeButton commentId={comment.id} trendSlug={trendSlug} initialLikes={comment.total_upvotes} upvotes={comment.upvotes} />
 
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => setIsReplying(true)}>
             reply
           </Button>
           {/* <Button variant="ghost" size="sm" className="gap-2">
@@ -96,6 +106,71 @@ function Comment({ comment, trendSlug }: { comment: Comments[string]; trendSlug:
             report
           </Button> */}
         </div>
+      </div>
+      {Object.entries(comment.replies).map(([key, reply]) => (
+        <Reply commentId={comment.id} setComments={setComments} reply={reply} trendSlug={trendSlug} key={key} />
+      ))}
+      {isReplying && (
+        <div ref={replyInputRef}>
+          <ReplyInput setComments={setComments} onClose={() => setIsReplying(false)} commentId={comment.id} trendSlug={trendSlug} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Reply({ reply, trendSlug, commentId }: { setComments: Dispatch<SetStateAction<Comments>>; reply: Comments[string]["replies"][0]; trendSlug: string; commentId: string }) {
+  return (
+    <div className="space-y-2 border-l pl-12">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-muted-foreground">{`${reply.from.slice(0, 4)}...${reply.from.slice(-4)}`}</span>
+          <span className="text-sm text-muted-foreground">{<TimeAgoText date={reply.created_at} />}</span>
+        </div>
+      </div>
+      <p>{reply.comment}</p>
+      <div className="flex items-center gap-4 text-sm">
+        <UpdateLikeButton commentId={commentId} replyId={reply.id} trendSlug={trendSlug} initialLikes={reply.total_upvotes} upvotes={reply.upvotes} />
+      </div>
+    </div>
+  );
+}
+
+function ReplyInput({
+  setComments,
+  onClose,
+  commentId,
+  trendSlug,
+}: {
+  setComments: Dispatch<SetStateAction<Comments>>;
+  onClose: () => void;
+  commentId: string;
+  trendSlug: string;
+}) {
+  const walletAddressID = useAppStore((state) => state.walletAddressID);
+  const [isLoading, setIsLoading] = useState(false);
+  const [reply, setReply] = useState("");
+
+  return (
+    <div className="flex gap-2">
+      <Input placeholder="Write a reply" className="mb-4" disabled={!walletAddressID || isLoading} value={reply} onChange={(e) => setReply(e.target.value)} autoFocus />
+      <div className="flex gap-2 mb-4">
+        <Button variant="ghost" disabled={isLoading} onClick={onClose}>
+          Discard
+        </Button>
+        <Button
+          disabled={!walletAddressID || isLoading}
+          onClick={async () => {
+            setIsLoading(true);
+            const data = await addTrendComment<Comments>(trendSlug, reply, commentId);
+            setComments(data);
+            setReply("");
+            setIsLoading(false);
+            onClose();
+          }}
+        >
+          {isLoading ? "Submitting..." : "Comment"}
+        </Button>
       </div>
     </div>
   );

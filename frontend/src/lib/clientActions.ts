@@ -39,13 +39,18 @@ export async function toggleTrendCommentLike({ trend, date, commentId, replyId }
   return data.data;
 }
 
-export async function addTrendComment<T>(trend: string, comment: string) {
+export async function addTrendComment<T>(trend: string, comment: string, commentId?: string) {
+  const tags = [
+    { name: "Action", value: "AddCommentToTrend" },
+    { name: "Trend", value: trend },
+    { name: "Comment", value: comment },
+  ];
+  if (commentId) {
+    // for a reply
+    tags.push({ name: "CommentID", value: commentId });
+  }
   const data = await sendAndReceiveGameMessage<T>({
-    tags: [
-      { name: "Action", value: "AddCommentToTrend" },
-      { name: "Trend", value: trend },
-      { name: "Comment", value: comment },
-    ],
+    tags,
   });
   return data.data;
 }

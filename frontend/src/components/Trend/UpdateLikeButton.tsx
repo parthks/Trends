@@ -13,9 +13,10 @@ type UpdateLikeButtonProps = {
   trendSlug: string;
   date?: string;
   commentId?: string;
+  replyId?: string;
 };
 
-export default function UpdateLikeButton({ initialLikes, upvotes, trendSlug, commentId, date }: UpdateLikeButtonProps) {
+export default function UpdateLikeButton({ initialLikes, upvotes, trendSlug, commentId, replyId, date }: UpdateLikeButtonProps) {
   const walletAddressID = useAppStore((state) => state.walletAddressID);
   const [likes, setLikes] = useState(initialLikes || 0);
   const [userLiked, setUserLiked] = useState(false);
@@ -25,7 +26,7 @@ export default function UpdateLikeButton({ initialLikes, upvotes, trendSlug, com
   const onClick = async () => {
     if (commentId) {
       // upvote comment on trend and trend day
-      await toggleTrendCommentLike({ trend: trendSlug, commentId: commentId, date });
+      await toggleTrendCommentLike({ trend: trendSlug, commentId: commentId, date, replyId });
     } else {
       await toggleTrendLike(trendSlug);
     }
