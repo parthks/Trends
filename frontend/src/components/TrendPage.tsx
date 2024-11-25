@@ -1,5 +1,5 @@
 import { Trend } from "@/utils/types";
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import { format } from "timeago.js";
 import Comments from "./Trend/Comments";
 import TrendLikeButton from "./Trend/TrendLikeButton";
