@@ -2,10 +2,11 @@
 
 import { useAppStore } from "@/store/useAppStore";
 import { Upvotes } from "@/utils/types";
-import { Loader2, ThumbsUp } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import { toggleTrendCommentLike, toggleTrendLike } from "@/lib/clientActions";
+import { toggleTrendCommentLike, toggleTrendLike, toggleTrendUpdateLike } from "@/lib/clientActions";
+import { IconArrowBadgeUp } from "@tabler/icons-react";
 
 type UpdateLikeButtonProps = {
   initialLikes: number;
@@ -27,7 +28,11 @@ export default function UpdateLikeButton({ initialLikes, upvotes, trendSlug, com
     if (commentId) {
       // upvote comment on trend and trend day
       await toggleTrendCommentLike({ trend: trendSlug, commentId: commentId, date, replyId });
+    } else if (date) {
+      // upvote trend day
+      await toggleTrendUpdateLike(trendSlug, date);
     } else {
+      // upvote trend
       await toggleTrendLike(trendSlug);
     }
   };
@@ -57,11 +62,11 @@ export default function UpdateLikeButton({ initialLikes, upvotes, trendSlug, com
           setIsLoading(false);
         }
       }}
-      variant={userLiked ? "secondary" : "ghost"}
+      variant={"ghost"}
       size="sm"
-      className="gap-2"
+      className={`gap-1 font-bold ${userLiked ? "text-secondary hover:text-secondary" : "text-primary hover:text-secondary"}`}
     >
-      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ThumbsUp className="w-4 h-4" />}
+      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <IconArrowBadgeUp className={`w-4 h-4`} />}
       {likes}
     </Button>
   );

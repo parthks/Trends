@@ -1,11 +1,12 @@
 "use client";
 
 import { toggleTrendLike } from "@/lib/clientActions";
+import { useAppStore } from "@/store/useAppStore";
 import { Upvotes } from "@/utils/types";
-import { ThumbsUp, Loader2 } from "lucide-react";
+import { IconArrowBadgeUp } from "@tabler/icons-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-import { useAppStore } from "@/store/useAppStore";
 
 export default function TrendLikeButton({ initialLikes, trend, upvotes }: { initialLikes: number; trend: string; upvotes: Upvotes }) {
   const walletAddressID = useAppStore((state) => state.walletAddressID);
@@ -39,10 +40,10 @@ export default function TrendLikeButton({ initialLikes, trend, upvotes }: { init
             setIsLoading(false);
           }
         }}
-        variant={userLiked ? "secondary" : "outline"}
-        className="gap-2"
+        variant={"ghost"}
+        className={`gap-1 font-bold ${userLiked ? "text-secondary hover:text-secondary" : "text-primary hover:text-primary"}`}
       >
-        <ThumbsUp className="w-4 h-4" />
+        <IconArrowBadgeUp className={`w-4 h-4 ${userLiked ? "text-secondary" : "text-primary"}`} />
         {likes} upvotes
         {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
       </Button>

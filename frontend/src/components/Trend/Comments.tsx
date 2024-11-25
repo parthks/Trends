@@ -1,5 +1,4 @@
 "use client";
-import { Card } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Comments } from "@/utils/types";
@@ -8,6 +7,7 @@ import { addTrendComment } from "@/lib/clientActions";
 import TimeAgoText from "../TimeAgoTex";
 import UpdateLikeButton from "./UpdateLikeButton";
 import { useAppStore } from "@/store/useAppStore";
+import { IconMessageCircle } from "@tabler/icons-react";
 
 type CommentsProps = {
   initialComments: Comments;
@@ -20,12 +20,12 @@ export default function TrendComments({ initialComments, trendSlug }: CommentsPr
   //   sort comments by created_at
   const sortedComments = Object.entries(comments).sort((a, b) => new Date(b[1].created_at).getTime() - new Date(a[1].created_at).getTime());
   return (
-    <Card className="p-4">
+    <div>
       <CommentInput setComments={setComments} trendSlug={trendSlug} />
       {sortedComments.map(([key, comment]) => (
         <Comment setComments={setComments} trendSlug={trendSlug} comment={comment} key={key} />
       ))}
-    </Card>
+    </div>
   );
 }
 
@@ -38,8 +38,8 @@ function CommentInput({ trendSlug, setComments }: { trendSlug: string; setCommen
   return (
     <div className="flex gap-2">
       <Input
-        placeholder="Add a comment"
-        className="mb-4"
+        placeholder="Join the board discussion..."
+        className="mb-6"
         disabled={!walletAddressID || isLoading}
         value={comment}
         onChange={(e) => setComment(e.target.value)}
@@ -54,7 +54,8 @@ function CommentInput({ trendSlug, setComments }: { trendSlug: string; setCommen
       {isFocused && (
         <Button
           disabled={!walletAddressID || isLoading}
-          className="mb-4 submit-btn"
+          className="mb-4"
+          variant="secondary"
           onClick={async () => {
             setIsLoading(true);
             const data = await addTrendComment<Comments>(trendSlug, comment);
@@ -63,7 +64,7 @@ function CommentInput({ trendSlug, setComments }: { trendSlug: string; setCommen
             setIsLoading(false);
           }}
         >
-          {isLoading ? "Submitting..." : "Submit"}
+          {isLoading ? "commenting..." : "comment"}
         </Button>
       )}
     </div>
@@ -82,19 +83,21 @@ function Comment({ setComments, comment, trendSlug }: { setComments: Dispatch<Se
   }, [isReplying]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mb-6">
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-muted-foreground">{`${comment.from.slice(0, 4)}...${comment.from.slice(-4)}`}</span>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-bold">{`${comment.from.slice(0, 6)}...${comment.from.slice(-4)}`}</span>
+            <span className="text-muted-foreground">·</span>
             <span className="text-sm text-muted-foreground">{<TimeAgoText date={comment.created_at} />}</span>
           </div>
         </div>
-        <p>{comment.comment}</p>
-        <div className="flex items-center gap-4 text-sm">
+        <p className="text-sm">{comment.comment}</p>
+        <div className="flex items-center gap-1 text-sm">
           <UpdateLikeButton commentId={comment.id} trendSlug={trendSlug} initialLikes={comment.total_upvotes} upvotes={comment.upvotes} />
 
           <Button variant="ghost" size="sm" onClick={() => setIsReplying(true)}>
+            <IconMessageCircle className="w-4 h-4" />
             reply
           </Button>
           {/* <Button variant="ghost" size="sm" className="gap-2">
@@ -107,28 +110,31 @@ function Comment({ setComments, comment, trendSlug }: { setComments: Dispatch<Se
           </Button> */}
         </div>
       </div>
-      {Object.entries(comment.replies).map(([key, reply]) => (
-        <Reply commentId={comment.id} setComments={setComments} reply={reply} trendSlug={trendSlug} key={key} />
-      ))}
-      {isReplying && (
-        <div ref={replyInputRef}>
-          <ReplyInput setComments={setComments} onClose={() => setIsReplying(false)} commentId={comment.id} trendSlug={trendSlug} />
-        </div>
-      )}
+      <div className="pl-12 border-l border-gray-200 dark:border-gray-800">
+        {Object.entries(comment.replies).map(([key, reply]) => (
+          <Reply commentId={comment.id} setComments={setComments} reply={reply} trendSlug={trendSlug} key={key} />
+        ))}
+        {isReplying && (
+          <div ref={replyInputRef}>
+            <ReplyInput setComments={setComments} onClose={() => setIsReplying(false)} commentId={comment.id} trendSlug={trendSlug} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 function Reply({ reply, trendSlug, commentId }: { setComments: Dispatch<SetStateAction<Comments>>; reply: Comments[string]["replies"][0]; trendSlug: string; commentId: string }) {
   return (
-    <div className="space-y-2 border-l pl-12">
+    <div className="space-y-2 mt-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-muted-foreground">{`${reply.from.slice(0, 4)}...${reply.from.slice(-4)}`}</span>
+        <div className="flex items-center gap-2 text-xs">
+          <span className="font-bold">{`${reply.from.slice(0, 6)}...${reply.from.slice(-4)}`}</span>
+          <span className="text-muted-foreground">·</span>
           <span className="text-sm text-muted-foreground">{<TimeAgoText date={reply.created_at} />}</span>
         </div>
       </div>
-      <p>{reply.comment}</p>
+      <p className="text-sm">{reply.comment}</p>
       <div className="flex items-center gap-4 text-sm">
         <UpdateLikeButton commentId={commentId} replyId={reply.id} trendSlug={trendSlug} initialLikes={reply.total_upvotes} upvotes={reply.upvotes} />
       </div>
@@ -152,7 +158,7 @@ function ReplyInput({
   const [reply, setReply] = useState("");
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 mt-2">
       <Input placeholder="Write a reply" className="mb-4" disabled={!walletAddressID || isLoading} value={reply} onChange={(e) => setReply(e.target.value)} autoFocus />
       <div className="flex gap-2 mb-4">
         <Button variant="ghost" disabled={isLoading} onClick={onClose}>
@@ -160,6 +166,7 @@ function ReplyInput({
         </Button>
         <Button
           disabled={!walletAddressID || isLoading}
+          variant="secondary"
           onClick={async () => {
             setIsLoading(true);
             const data = await addTrendComment<Comments>(trendSlug, reply, commentId);
@@ -169,7 +176,7 @@ function ReplyInput({
             onClose();
           }}
         >
-          {isLoading ? "Submitting..." : "Comment"}
+          {isLoading ? "replying..." : "reply"}
         </Button>
       </div>
     </div>

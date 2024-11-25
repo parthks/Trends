@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IconX, IconBrandTwitter, IconBrandWhatsapp, IconBrandDiscord, IconBrandReddit } from "@tabler/icons-react";
+import { IconX, IconBrandTwitter, IconBrandWhatsapp, IconBrandDiscord, IconBrandReddit, IconShare3 } from "@tabler/icons-react";
 import { Button } from "./ui/button";
-import { Share2 } from "lucide-react";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -145,8 +144,8 @@ export function ShareButton() {
   return (
     <>
       <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} url={url} />
-      <Button onClick={handleShare} variant="outline" className="gap-2">
-        <Share2 className="w-4 h-4" />
+      <Button onClick={handleShare} variant="ghost" className="gap-1 font-bold">
+        <IconShare3 className="w-4 h-4" />
         share
       </Button>
     </>

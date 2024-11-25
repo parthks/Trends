@@ -5,6 +5,7 @@ export type TrendPreview = {
   handles: Record<string, { handle: string; num_tweets: number }>;
   upvotes: Upvotes;
   total_upvotes: number;
+  total_views: number;
   last_updated: string;
   num_updates: number;
   followers: Record<string, { created_at: string }>;
