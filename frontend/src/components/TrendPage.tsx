@@ -7,6 +7,7 @@ import AvatarCircles from "./ui/avatar-circles";
 import { ShareButton } from "./ShareModal";
 import Image from "next/image";
 import { IconAward, IconClockEdit } from "@tabler/icons-react";
+import TrendHeatMap from "./TrendHeatMap";
 
 // New lazy-loaded component
 const TimelineEntry = lazy(() => import("./Trend/TimelineEntry"));
@@ -78,14 +79,24 @@ export default function TrendPage({ trendData }: { trendData: Trend }) {
         {/* <div className="col-span-1 md:col-span-0"></div> */}
 
         {/* Right Column - Timeline */}
-        <div className="lg:col-span-7 md:col-span-6 overflow-y-auto ml-4 pl-4 border-l border-gray-200 dark:border-gray-800">
-          <div className="space-y-8">
-            <h2 className="text-2xl font-bold">Timeline</h2>
-            {sortedByDate.map(([date, update]) => (
-              <Suspense key={date} fallback={<div className="animate-pulse h-40 bg-muted rounded-lg"></div>}>
-                <TimelineEntry date={date} update={update} trendSlug={trendData.slug} />
-              </Suspense>
-            ))}
+        <div className="lg:col-span-7 md:col-span-6 overflow-hidden ml-4 pl-4 border-l border-gray-200 dark:border-gray-800">
+          <div className="h-full flex flex-col">
+            <div className="flex-none">
+              <h2 className="text-2xl font-bold">Timeline</h2>
+
+              {/* heatmap */}
+              <div className="md:block hidden mb-10 mt-6">
+                <TrendHeatMap trendData={trendData} />
+              </div>
+            </div>
+
+            <div id="timeline-entries" className="flex-1 overflow-y-auto space-y-6">
+              {sortedByDate.map(([date, update]) => (
+                <div key={date} id={`timeline-${date.replace(/\//g, "-")}`}>
+                  <TimelineEntry date={date} update={update} trendSlug={trendData.slug} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

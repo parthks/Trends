@@ -89,9 +89,9 @@ export default function ShareModal({ isOpen, onClose, url }: ShareModalProps) {
           {/* URL Input */}
           <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg mb-6">
             <input type="text" value={url} readOnly className="flex-1 bg-transparent outline-none text-sm" />
-            <button onClick={copyToClipboard} className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium">
+            <Button onClick={copyToClipboard} variant="secondary" className="text-sm">
               {copied ? "copied" : "copy link"}
-            </button>
+            </Button>
           </div>
 
           {/* Share Buttons */}
@@ -123,7 +123,7 @@ export function ShareButton() {
     if (typeof window !== "undefined") {
       setUrl(window.location.href);
     }
-  }, []);
+  }, [isShareModalOpen]);
 
   const handleShare = async () => {
     if (isMobile() && navigator.canShare({ url })) {

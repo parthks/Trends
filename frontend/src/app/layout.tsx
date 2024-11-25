@@ -4,6 +4,8 @@ import ConnectWallet from "@/components/ConnectWallet";
 
 // Add this import at the top with the other imports
 import { Open_Sans } from "next/font/google";
+import { IconHome } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
 
 // Add this configuration after the imports
 const openSans = Open_Sans({
@@ -32,8 +34,11 @@ export default function RootLayout({
               </Link>
             </div>
             <div className="flex items-center gap-6">
-              <Link href="/" className="text-sm font-medium transition-colors hover:text-primary">
-                Home
+              <Link href="/">
+                <Button className="gap-1 font-bold" variant="ghost">
+                  <IconHome className="w-4 h-4" />
+                  home
+                </Button>
               </Link>
             </div>
             <div className="ml-auto">

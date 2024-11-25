@@ -2,6 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+.tooltip-container {
+  position: relative;
+}
+
+.tooltip {
+  visibility: hidden;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+}
+
+.tooltip-container:hover .tooltip {
+  visibility: visible;
+}
+
 body {
   font-family: "Open Sans", Arial, Helvetica, sans-serif;
 }

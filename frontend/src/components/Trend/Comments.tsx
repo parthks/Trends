@@ -36,10 +36,9 @@ function CommentInput({ trendSlug, setComments }: { trendSlug: string; setCommen
   const [comment, setComment] = useState("");
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 mb-8">
       <Input
         placeholder="Join the board discussion..."
-        className="mb-6"
         disabled={!walletAddressID || isLoading}
         value={comment}
         onChange={(e) => setComment(e.target.value)}
@@ -54,7 +53,6 @@ function CommentInput({ trendSlug, setComments }: { trendSlug: string; setCommen
       {isFocused && (
         <Button
           disabled={!walletAddressID || isLoading}
-          className="mb-4"
           variant="secondary"
           onClick={async () => {
             setIsLoading(true);
@@ -88,7 +86,7 @@ function Comment({ setComments, comment, trendSlug }: { setComments: Dispatch<Se
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs">
             <span className="font-bold">{`${comment.from.slice(0, 6)}...${comment.from.slice(-4)}`}</span>
-            <span className="text-muted-foreground">·</span>
+            <span className="h-[2px] w-[2px] bg-muted-foreground rounded-full" />
             <span className="text-sm text-muted-foreground">{<TimeAgoText date={comment.created_at} />}</span>
           </div>
         </div>
@@ -130,7 +128,7 @@ function Reply({ reply, trendSlug, commentId }: { setComments: Dispatch<SetState
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs">
           <span className="font-bold">{`${reply.from.slice(0, 6)}...${reply.from.slice(-4)}`}</span>
-          <span className="text-muted-foreground">·</span>
+          <span className="h-[2px] w-[2px] bg-muted-foreground rounded-full" />
           <span className="text-sm text-muted-foreground">{<TimeAgoText date={reply.created_at} />}</span>
         </div>
       </div>

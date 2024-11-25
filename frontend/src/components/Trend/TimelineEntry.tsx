@@ -6,7 +6,7 @@ import TweetCard from "../TweetCard";
 import UpdateLikeButton from "./UpdateLikeButton";
 
 export default function TimelineEntry({ date, update, trendSlug }: { date: string; update: Trend["byDay"][string]; trendSlug: string }) {
-  const day = new Date(date).getUTCDate();
+  const day = new Date(date).getUTCDate().toString().padStart(2, "0");
   const month = new Date(date).toLocaleString("default", { month: "short" });
   const tweets = update.tweets;
 
