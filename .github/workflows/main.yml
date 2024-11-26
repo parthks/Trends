@@ -1,11 +1,11 @@
 name: Protocol Land Sync
 on:
     # Run with every push to 'main' branch:
-    push:
-        branches:
-            - 'main'
+    # push:
+    #     branches:
+    #         - 'main'
     # Run Manually:
-    #workflow_dispatch:
+    workflow_dispatch:
 jobs:
     build:
         runs-on: ubuntu-latest
