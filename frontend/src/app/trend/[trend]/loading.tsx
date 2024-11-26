@@ -4,8 +4,7 @@ export default function Loading() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left Column (1/3 width) */}
-        <div className="lg:col-span-5 lg:mr-10 md:col-span-6 space-y-6 flex flex-col pb-4">
+        <div className="lg:col-span-5 md:col-span-6 space-y-6 flex flex-col pb-4">
           {/* Header Skeleton */}
           <div className="space-y-3">
             <Skeleton className="h-8 w-3/4" />
@@ -41,8 +40,7 @@ export default function Loading() {
           </div>
         </div>
 
-        {/* Right Column (2/3 width) */}
-        <div className="lg:col-span-7 md:col-span-6 ml-4 pl-4  space-y-6">
+        <div className="lg:col-span-7 md:col-span-6 ml-4 pl-4 space-y-6">
           {/* Trend Info Card */}
           <div className="border rounded-lg p-4 space-y-4">
             <Skeleton className="h-6 w-3/4" />
