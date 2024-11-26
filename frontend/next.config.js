@@ -6,9 +6,9 @@ const nextConfig = {
   images: {
     domains: ["arweave.net"],
   },
-  reactStrictMode: true,
-  output: "export",
-  trailingSlash: true,
+  // reactStrictMode: true,
+  // output: "export",
+  // trailingSlash: true,
 };
 
 module.exports = nextConfig;
