@@ -13,6 +13,13 @@ const openSans = Open_Sans({
   variable: "--font-open-sans",
 });
 
+import type { Metadata } from "next";
+export const metadata: Metadata = {
+  title: "Trends",
+  description:
+    "Discover and share trending topics in a public forum that fosters genuine discussions and curates information. Engage with message boards, track key events, and upvote with to shape the narrative.",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
