@@ -4,7 +4,16 @@ import { TweetProps, useTweet } from "react-tweet";
 
 import { MagicTweet, TweetNotFound, TweetSkeleton } from "@/components/TweetCard";
 
-const ClientTweetCard = ({ id, apiUrl, fallback = <TweetSkeleton />, components, fetchOptions, onError, ...props }: TweetProps & { className?: string }) => {
+const ClientTweetCard = ({
+  id,
+  renderMedia = true,
+  apiUrl,
+  fallback = <TweetSkeleton />,
+  components,
+  fetchOptions,
+  onError,
+  ...props
+}: TweetProps & { className?: string; renderMedia?: boolean }) => {
   const { data, error, isLoading } = useTweet(id, apiUrl, fetchOptions);
 
   if (isLoading) return fallback;
@@ -13,7 +22,7 @@ const ClientTweetCard = ({ id, apiUrl, fallback = <TweetSkeleton />, components,
     return <NotFound error={onError ? onError(error) : error} />;
   }
 
-  return <MagicTweet tweet={data} components={components} {...props} />;
+  return <MagicTweet tweet={data} renderMedia={renderMedia} components={components} {...props} />;
 };
 
 export default ClientTweetCard;

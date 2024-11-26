@@ -1,34 +1,4 @@
 
-'''
-# lua table format:
-["2024-11-18"] = {
-        tweets = {
-            {
-                id = "1858573102713573856",
-                handle = "samecwilliams",
-            }
-        },
-        summary =
-        "A new supercomputer, developed by @aoTheComputer, is making dreams possible within the blockchain ecosystem. This advancement highlights significant technical innovations, particularly in enhancing computational capabilities. For more details, you can view the tweet [here](https://twitter.com/basejumpxyz/status/1858566615282901195)."
-    }
-
-# summary format
-"2024-11-19": {
-    "tweets": [
-    {
-        "id": "1858701455500230918",
-        "user": "samecwilliams",
-        "retweet": "New VM integration unlocked \ud83d\udd11\n\nIt's now possible to deploy a WeaveVM L2 that uses the SVM for computation and WeaveVM for data settlement, with a direct data pipeline to Arweave\u2019s permanent storage and out-of-the-box support to deploy Solana dApps.\n\nhttps://blog.wvm.dev/weave-svm/ https://t.co/5Axj4oy4gn",
-        "retweetUser": "weavevm",
-        "createdAt": "Tue Nov 19 02:38:54 +0000 2024",
-        "tags": ["Technical Innovations", "Ecosystem Projects"],
-        "explanation": "The tweet discusses a new VM integration that allows for deploying a WeaveVM L2 using SVM for computation, which is a technical advancement (Technical Innovations). It also highlights the capability to deploy Solana dApps, indicating a new project within the blockchain ecosystem (Ecosystem Projects).",
-        "likeCount": 49
-    },
-    ],
-    "summary": "A new VM integration has been announced, enabling the deployment of a WeaveVM L2 that utilizes SVM for computation and WeaveVM for data settlement. This integration provides a direct data pipeline to Arweave's permanent storage and supports the deployment of Solana dApps. For more details, you can read the full announcement [here](https://blog.wvm.dev/weave-svm/).\n\nAdditionally, a new feature allows users to host their INSERT_CHAIN app on Arweave with just one click. This feature automatically assigns a human-readable domain that is resolvable across approximately 250 Arweave gateways, marking a significant step towards a decentralized front-end future."
-},
-'''
 
 import json
 
@@ -51,10 +21,16 @@ topics = {
 "Unknown": "This category captures content that doesn’t fit into the predefined topics but might still be relevant or interesting. Users should expect miscellaneous updates, unexpected insights, or outlier discussions that defy categorization but add value to the overall blockchain narrative.",
 }
 
+input_file = "bigData/summary.json"
+output_file = "bigData/trends_data.json"
+output_lua_file = "backend/trends_data.lua"
+
+
+
 tweets_by_tag_and_day = {}
 lua_table = {}
 lua_table_text = "DATA = {\n"
-with open('summary.json', 'r') as file:
+with open(input_file, 'r') as file:
     tweets_by_tag_and_day = json.load(file)
 
 handles = {}
@@ -108,9 +84,43 @@ for tag, days in tweets_by_tag_and_day.items():
     lua_table_text += "}},\n"
 
 # save to file
-with open('trends_data.json', 'w') as file:
+with open(output_file, 'w') as file:
     file.write(json.dumps(lua_table))
 
 lua_table_text += "\n}"
-with open('backend/trends_data.lua', 'w') as file:
+with open(output_lua_file, 'w') as file:
     file.write(lua_table_text)
+
+
+
+
+'''
+# lua table format:
+["2024-11-18"] = {
+        tweets = {
+            {
+                id = "1858573102713573856",
+                handle = "samecwilliams",
+            }
+        },
+        summary =
+        "A new supercomputer, developed by @aoTheComputer, is making dreams possible within the blockchain ecosystem. This advancement highlights significant technical innovations, particularly in enhancing computational capabilities. For more details, you can view the tweet [here](https://twitter.com/basejumpxyz/status/1858566615282901195)."
+    }
+
+# summary format
+"2024-11-19": {
+    "tweets": [
+    {
+        "id": "1858701455500230918",
+        "user": "samecwilliams",
+        "retweet": "New VM integration unlocked \ud83d\udd11\n\nIt's now possible to deploy a WeaveVM L2 that uses the SVM for computation and WeaveVM for data settlement, with a direct data pipeline to Arweave\u2019s permanent storage and out-of-the-box support to deploy Solana dApps.\n\nhttps://blog.wvm.dev/weave-svm/ https://t.co/5Axj4oy4gn",
+        "retweetUser": "weavevm",
+        "createdAt": "Tue Nov 19 02:38:54 +0000 2024",
+        "tags": ["Technical Innovations", "Ecosystem Projects"],
+        "explanation": "The tweet discusses a new VM integration that allows for deploying a WeaveVM L2 using SVM for computation, which is a technical advancement (Technical Innovations). It also highlights the capability to deploy Solana dApps, indicating a new project within the blockchain ecosystem (Ecosystem Projects).",
+        "likeCount": 49
+    },
+    ],
+    "summary": "A new VM integration has been announced, enabling the deployment of a WeaveVM L2 that utilizes SVM for computation and WeaveVM for data settlement. This integration provides a direct data pipeline to Arweave's permanent storage and supports the deployment of Solana dApps. For more details, you can read the full announcement [here](https://blog.wvm.dev/weave-svm/).\n\nAdditionally, a new feature allows users to host their INSERT_CHAIN app on Arweave with just one click. This feature automatically assigns a human-readable domain that is resolvable across approximately 250 Arweave gateways, marking a significant step towards a decentralized front-end future."
+},
+'''

@@ -2,8 +2,9 @@ import { Card } from "@/components/ui/card";
 import { Trend } from "@/utils/types";
 import { IconTrendingUp } from "@tabler/icons-react";
 import { ShareButton } from "../ShareModal";
-import TweetCard from "../TweetCard";
+// import TweetCard from "../TweetCard";
 import UpdateLikeButton from "./UpdateLikeButton";
+import ClientTweetCard from "../ClientTweetCard";
 
 export default function TimelineEntry({ date, update, trendSlug }: { date: string; update: Trend["byDay"][string]; trendSlug: string }) {
   const day = new Date(date).getUTCDate().toString().padStart(2, "0");
@@ -37,7 +38,7 @@ export default function TimelineEntry({ date, update, trendSlug }: { date: strin
           <div className="flex gap-4 min-w-max">
             {tweets.map((tweet) => (
               <div key={tweet.id} className="flex-shrink-0">
-                <TweetCard className="w-[226px]" renderMedia={false} id={tweet.id} />
+                <ClientTweetCard className="w-[226px]" renderMedia={false} id={tweet.id} />
               </div>
             ))}
           </div>
