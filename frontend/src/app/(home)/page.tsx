@@ -64,7 +64,7 @@ async function HomeContent({ data }: { data: Record<string, TrendPreview> }) {
             else if (index === 15) className += " lg:col-span-4";
 
             return (
-              <Link className={className} key={index} href={`/trend/${trend.slug}`}>
+              <Link className={className} key={index} href={`/trend?topic=${trend.slug}`}>
                 <GenericTrendCard data={trend} />
               </Link>
             );

@@ -4,11 +4,14 @@ import CommunityTimeline from "@/components/TrendPage";
 import { Trend } from "@/utils/types";
 import { sendDryRunGameMessage } from "@/utils/wallet";
 import { useEffect, useState } from "react";
-import Loading from "@/app/trend/[trend]/loading";
+import Loading from "@/app/trend/loading";
+import { useSearchParams } from "next/navigation";
 
-export default function TrendPage({ params }: { params: { trend: string } }) {
+export default function TrendPage() {
   const [trendData, setTrendData] = useState<Trend | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const topic = searchParams.get("topic") ?? "ecosystem-projects";
 
   useEffect(() => {
     async function fetchTrend() {
@@ -16,7 +19,7 @@ export default function TrendPage({ params }: { params: { trend: string } }) {
         const data = await sendDryRunGameMessage<Trend>({
           tags: [
             { name: "Action", value: "GetTrend" },
-            { name: "Trend", value: params.trend },
+            { name: "Trend", value: topic },
           ],
         });
         setTrendData(data.data);
@@ -28,7 +31,7 @@ export default function TrendPage({ params }: { params: { trend: string } }) {
     }
 
     fetchTrend();
-  }, [params.trend]);
+  }, [topic]);
 
   if (isLoading) return <Loading />;
   if (!trendData) return <div>Failed to load trend</div>;
