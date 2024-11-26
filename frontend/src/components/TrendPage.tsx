@@ -5,9 +5,10 @@ import Comments from "./Trend/Comments";
 import TrendLikeButton from "./Trend/TrendLikeButton";
 import AvatarCircles from "./ui/avatar-circles";
 import { ShareButton } from "./ShareModal";
-import Image from "next/image";
+// import Image from "next/image";
 import { IconAward, IconClockEdit } from "@tabler/icons-react";
 import TrendHeatMap from "./TrendHeatMap";
+import { TREND_CATEGORIES } from "@/utils/constants";
 
 // New lazy-loaded component
 const TimelineEntry = lazy(() => import("./Trend/TimelineEntry"));
@@ -38,12 +39,19 @@ export default function TrendPage({ trendData }: { trendData: Trend }) {
               style={{
                 borderRadius: "6px",
                 border: "1px solid #E8E8E8",
-                background: `url(https://arweave.net/MTGE99QY0JKfhu1rBkEylYCscQPFw83skwAMghzJEFM) lightgray 50% / cover no-repeat`,
+                background: `url(${
+                  TREND_CATEGORIES[trendData.slug as keyof typeof TREND_CATEGORIES].image ?? "https://arweave.net/MTGE99QY0JKfhu1rBkEylYCscQPFw83skwAMghzJEFM"
+                }) lightgray 50% / cover no-repeat`,
                 boxShadow: "0px 2px 16px 0px rgba(0, 0, 0, 0.04)",
               }}
               className="relative h-16"
             >
-              <Image src={"https://arweave.net/MTGE99QY0JKfhu1rBkEylYCscQPFw83skwAMghzJEFM"} alt={trendData.name} fill className="object-contain" />
+              {/* <Image
+                src={TREND_CATEGORIES[trendData.slug as keyof typeof TREND_CATEGORIES].image ?? "https://arweave.net/MTGE99QY0JKfhu1rBkEylYCscQPFw83skwAMghzJEFM"}
+                alt={trendData.name}
+                fill
+                className="object-contain"
+              /> */}
             </div>
             <h1 className="text-4xl font-bold">{trendData.name}</h1>
             <div className="flex justify-between items-center gap-4">
@@ -53,7 +61,7 @@ export default function TrendPage({ trendData }: { trendData: Trend }) {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <IconClockEdit className="w-4 h-4" />
-                <span>updated {format(trendData.last_updated)}</span>
+                <span>{format(trendData.last_updated)}</span>
               </div>
             </div>
           </div>
@@ -82,10 +90,10 @@ export default function TrendPage({ trendData }: { trendData: Trend }) {
         <div className="lg:col-span-7 md:col-span-6 overflow-hidden ml-4 pl-4 border-l border-gray-200 dark:border-gray-800">
           <div className="h-full flex flex-col">
             <div className="flex-none">
-              <h2 className="text-2xl font-bold">Timeline</h2>
+              <h2 className="text-2xl font-bold mt-2">Timeline</h2>
 
               {/* heatmap */}
-              <div className="md:block hidden mb-10 mt-6">
+              <div className="md:block hidden mb-8 mt-6">
                 <TrendHeatMap trendData={trendData} />
               </div>
             </div>
