@@ -4,7 +4,7 @@ import { IconTrendingUp } from "@tabler/icons-react";
 import { ShareButton } from "../ShareModal";
 // import TweetCard from "../TweetCard";
 import UpdateLikeButton from "./UpdateLikeButton";
-import ClientTweetCard from "../ClientTweetCard";
+import LazyTweets from "./LazyTweets";
 
 export default function TimelineEntry({ date, update, trendSlug }: { date: string; update: Trend["byDay"][string]; trendSlug: string }) {
   const day = new Date(date).getUTCDate().toString().padStart(2, "0");
@@ -35,13 +35,7 @@ export default function TimelineEntry({ date, update, trendSlug }: { date: strin
           Trending Messages
         </p>
         <div className="w-full overflow-x-auto">
-          <div className="flex gap-4 min-w-max">
-            {tweets.map((tweet) => (
-              <div key={tweet.id} className="flex-shrink-0">
-                <ClientTweetCard className="w-[226px]" renderMedia={false} id={tweet.id} />
-              </div>
-            ))}
-          </div>
+          <LazyTweets tweets={tweets} />
         </div>
         <div className="flex items-center gap-1 mt-4">
           <UpdateLikeButton initialLikes={update.total_upvotes} upvotes={update.upvotes} trendSlug={trendSlug} date={date} />
