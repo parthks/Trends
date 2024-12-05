@@ -1,24 +1,17 @@
+"use client";
+
 import GenericTrendCard from "@/components/TrendPreviewCard";
 import { TrendPreview } from "@/utils/types";
 import { sendDryRunGameMessage } from "@/utils/wallet";
-import { Suspense } from "react";
+import { useEffect, useState } from "react";
 import Loading from "./loading";
 import Link from "next/link";
 import { IconTrendingUp } from "@tabler/icons-react";
 
-export const revalidate = 0; // Disable caching for this route segment
-
-import type { Metadata } from "next";
-export const metadata: Metadata = {
-  title: "Trends",
-  description:
-    "Discover and share trending topics in a public forum that fosters genuine discussions and curates information. Engage with message boards, track key events, and upvote with to shape the narrative.",
-};
+// export const revalidate = 0; // Disable caching for this route segment
 
 // Create a separate component for the main content
-async function HomeContent() {
-  const data = await sendDryRunGameMessage<Record<string, TrendPreview>>({ tags: [{ name: "Action", value: "GetTrends" }] });
-
+async function HomeContent({ data }: { data: Record<string, TrendPreview> }) {
   const topics = [
     "Ecosystem Projects",
     "Community Events",
@@ -39,7 +32,7 @@ async function HomeContent() {
   ];
 
   // arrange the trends data by the topics index position
-  const trendsData = Object.values(data.data);
+  const trendsData = Object.values(data);
   const trends = topics.map((topic) => trendsData.find((trend) => trend.name.includes(topic))).filter((trend) => trend !== undefined);
 
   // sleep for 10 seconds
@@ -71,7 +64,7 @@ async function HomeContent() {
             else if (index === 15) className += " lg:col-span-4";
 
             return (
-              <Link className={className} key={index} href={`/trend/${trend.slug}`}>
+              <Link className={className} key={index} href={`/trend?topic=${trend.slug}`}>
                 <GenericTrendCard data={trend} />
               </Link>
             );
@@ -83,9 +76,28 @@ async function HomeContent() {
 }
 
 export default function Home() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <HomeContent />
-    </Suspense>
-  );
+  const [trends, setTrends] = useState<Record<string, TrendPreview> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTrends() {
+      try {
+        const data = await sendDryRunGameMessage<Record<string, TrendPreview>>({
+          tags: [{ name: "Action", value: "GetTrends" }],
+        });
+        setTrends(data.data);
+      } catch (error) {
+        console.error("Error fetching trends:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchTrends();
+  }, []);
+
+  if (isLoading) return <Loading />;
+  if (!trends) return <div>Failed to load trends</div>;
+
+  return <HomeContent data={trends} />;
 }

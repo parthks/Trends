@@ -90,7 +90,7 @@ export default function TrendPage({ trendData }: { trendData: Trend }) {
         <div className="lg:col-span-7 md:col-span-6 overflow-hidden ml-4 pl-4 border-l border-gray-200 dark:border-gray-800">
           <div className="h-full flex flex-col">
             <div className="flex-none">
-              <h2 className="text-2xl font-bold mt-2">Timeline</h2>
+              <h2 className="text-2xl font-bold mb-2">Timeline</h2>
 
               {/* heatmap */}
               <div className="md:block hidden mb-8 mt-6">
