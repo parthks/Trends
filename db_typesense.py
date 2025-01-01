@@ -31,21 +31,8 @@ print(len(data), 'Data loaded from', input_filename)
 # loop over data and convert createdAt to unix timestamp
 for i, tweet in enumerate(data):
     # "createdAt": "Wed Nov 20 15:34:28 +0000 2024"
-    data[i]['created_at'] = int(datetime.strptime(tweet['createdAt'], '%a %b %d %H:%M:%S +0000 %Y').timestamp())
-    del data[i]['createdAt']
-    if 'retweetUser' in data[i]:
-        data[i]['retweet_user'] = data[i]['retweetUser']
-        del data[i]['retweetUser']
-    if 'quoteUser' in data[i]:
-        data[i]['quote_user'] = data[i]['quoteUser']
-        del data[i]['quoteUser']
-    if 'quoteId' in data[i]:
-        data[i]['quote_id'] = data[i]['quoteId']
-        del data[i]['quoteId']
-    if 'originalTweetId' in data[i]:
-        data[i]['original_tweet_id'] = data[i]['originalTweetId']
-        del data[i]['originalTweetId']
-    del data[i]['likeCount']
+    data[i]['created_at'] = int(datetime.strptime(tweet['created_at'], '%a %b %d %H:%M:%S +0000 %Y').timestamp())
+    del data[i]['like_count']
 
 # loop over data and upload 100 at a time to Typesense  
 for i in range(0, len(data), 100):

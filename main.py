@@ -36,7 +36,8 @@ def getMedia(tweet):
                 highest_bitrate_video = max(variants, key=lambda x: x['bitrate'] if x['content_type'] == 'video/mp4' else 0)
                 if highest_bitrate_video:   
                     media.append({
-                        'original_url': highest_bitrate_video['url'],
+                        'original_url': media_data['url'],
+                        'url': highest_bitrate_video['url'],
                         'thumbnail_url': media_data['media_url_https'],
                         'type': media_data['type']
                     })
@@ -62,34 +63,34 @@ for tweet in data:
     tweet_data = {}
     tweet_data['media'] = getMedia(tweet)
     tweet_data['id'] = tweet['id']
-    tweet_data['likeCount'] = tweet['likeCount']
+    tweet_data['like_count'] = tweet['likeCount']
     tweet_data['user'] = tweet['author']['userName']
     if tweet['conversationId'] != tweet['id']:
-        tweet_data['conversationId'] = tweet['conversationId']
+        tweet_data['conversation_id'] = tweet['conversationId']
     if 'retweet' in tweet:
         tweet_data['retweet'] = expandUrls(tweet['retweet'], tweet['retweet']['text'])
-        tweet_data['originalTweetId'] = tweet['retweet']['id']
-        tweet_data['retweetUser'] = tweet['retweet']['author']['userName']
+        tweet_data['original_tweet_id'] = tweet['retweet']['id']
+        tweet_data['retweet_user'] = tweet['retweet']['author']['userName']
     else:
         tweet_data['text'] = expandUrls(tweet, tweet['fullText'])
-    tweet_data['createdAt'] = tweet['createdAt']
+    tweet_data['created_at'] = tweet['createdAt']
     # add quote tweet data if it exists
     if 'quote' in tweet:
         tweet_data['quote'] = expandUrls(tweet['quote'], tweet['quote']['text'])
-        tweet_data['quoteMedia'] = getMedia(tweet['quote'])
-        tweet_data['quoteId'] = tweet['quote']['id']
-        tweet_data['quoteUser'] = tweet['quote']['author']['userName']
+        tweet_data['quote_media'] = getMedia(tweet['quote'])
+        tweet_data['quote_id'] = tweet['quote']['id']
+        tweet_data['quote_user'] = tweet['quote']['author']['userName']
     tweets.append(tweet_data)
 
-# for each tweet, check if there are tweets with the same conversationId and add them to the main tweet
-# then remove the conversationId tweets
+# for each tweet, check if there are tweets with the same conversation_id and add them to the main tweet
+# then remove the conversation_id tweets
 # Create a dictionary to store conversations
 conversations = {}
 
 # First pass: Organize tweets into conversations
 for tweet in tweets[:]:  # Create a copy of the list to iterate
-    if 'conversationId' in tweet:
-        conv_id = tweet['conversationId']
+    if 'conversation_id' in tweet:
+        conv_id = tweet['conversation_id']
         if conv_id not in conversations:
             conversations[conv_id] = []
         conversations[conv_id].append(tweet)
@@ -100,10 +101,10 @@ for tweet in tweets[:]:  # Create a copy of the list to iterate
     if tweet_id in conversations:
         # This tweet has replies
         # Sort conversations by createdAt date
-        tweet['thread'] = sorted(conversations[tweet_id], key=lambda x: x['createdAt'])
+        tweet['thread'] = sorted(conversations[tweet_id], key=lambda x: x['created_at'])
         # combine the media of the tweet and the thread
         thread_media = [media for thread in tweet['thread'] for media in thread['media']]
-        quote_media = [media for thread in tweet['thread'] for media in thread.get('quoteMedia', []) if thread.get('quoteMedia')]
+        quote_media = [media for thread in tweet['thread'] for media in thread.get('quote_media', []) if thread.get('quote_media')]
         tweet['media'] = tweet['media'] + thread_media + quote_media
         # combine the text of the tweet and the thread
         tweet['text'] = tweet['text'] + '. ' + '. '.join([thread['text'] for thread in tweet['thread']])

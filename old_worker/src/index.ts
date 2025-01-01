@@ -13,14 +13,15 @@
 
 import Typesense from 'typesense';
 
+type Media = { original_url: string; url: string; thumbnail_url?: string; type: string };
 type TweetData = {
 	id: string;
 	created_at: number;
 	user: string;
-	media: { original_url: string; type: string }[];
+	media: Media[];
 	text?: string;
 	quote?: string;
-	quote_media?: { original_url: string; type: string }[];
+	quote_media?: Media[];
 	retweet?: string;
 	retweet_user?: string;
 	original_tweet_id?: string;
