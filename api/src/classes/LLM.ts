@@ -1,4 +1,4 @@
-import { TweetData } from "../helpers/types";
+import { ParsedTweetData } from "../helpers/types";
 
 export class LLM {
   private aiClient: CloudflareBindings["AI"];
@@ -23,7 +23,7 @@ export class LLM {
     return response;
   }
 
-  async summarizeTweets(tweets: TweetData[]) {
+  async summarizeTweets(tweets: ParsedTweetData[]) {
     const tweetsMessage = this.parseTweetsIntoMessage(tweets);
     const prompt = `
     Summarize the key updates from tweets. Use only the provided tweets as the source material, and avoid repeating anything. If there is an external link in the tweets (like to a website or blog), include it so people can easily explore more.
@@ -46,7 +46,7 @@ export class LLM {
     return response;
   }
 
-  private parseTweetsIntoMessage(searchDocuments: TweetData[]): string {
+  private parseTweetsIntoMessage(searchDocuments: ParsedTweetData[]): string {
     // First, create a map to track which original tweets we've seen
     const seenOriginalTweets = new Set<string>();
 
@@ -79,7 +79,7 @@ export class LLM {
       acc[date] = acc[date] || [];
       acc[date].push(tweet);
       return acc;
-    }, {} as Record<string, TweetData[]>);
+    }, {} as Record<string, ParsedTweetData[]>);
 
     // format a single string message of tweets. First say Date: then the tweets
     const messages = Object.entries(tweetsByDate)

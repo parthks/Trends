@@ -3,8 +3,10 @@ import { parseTweets, parseUserInfo } from "../helpers/parse";
 
 interface ScrapeMetadata {
   maxItems?: number;
-  since?: number;
+  until?: number;
 }
+
+const TWEET_SCRAPER_ACTOR = "61RPP7dywgiy0JPD0";
 
 export class Scraper {
   private client: ApifyClient;
@@ -15,17 +17,25 @@ export class Scraper {
     });
   }
 
+  // async scrapeTweet(tweetId: string) {
+  //   const run = await this.client.actor(TWEET_SCRAPER_ACTOR).call({
+  //     searchTerms: ["from:" + userHandle + " until:" + until + " -filter:replies"],
+  //     maxItems: metadata.maxItems ?? 10,
+  //     sort: "Latest",
+  //   });
+  // }
+
   async scrapeUserTweets(userHandle: string, metadata: ScrapeMetadata) {
     // Prepare Actor input
-    const since = metadata.since ? new Date(metadata.since).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+    const until = metadata.until ? new Date(metadata.until).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
     const input = {
-      searchTerms: ["from:" + userHandle + " until:" + since + " -filter:replies"],
+      searchTerms: ["from:" + userHandle + " until:" + until + " -filter:replies"],
       maxItems: metadata.maxItems ?? 10,
       sort: "Latest",
     };
 
     // Run the Actor and wait for it to finish
-    const run = await this.client.actor("61RPP7dywgiy0JPD0").call(input);
+    const run = await this.client.actor(TWEET_SCRAPER_ACTOR).call(input);
     if (run.exitCode) {
       throw new Error("Failed to scrape user tweets");
     }
@@ -45,6 +55,6 @@ export class Scraper {
     const tweets = parseTweets(items as any[]);
     const userInfo = parseUserInfo(items as any[], userHandle);
 
-    return { tweets, userInfo };
+    return { fullTweetData: items as any[], parsedTweetData: tweets, userInfo };
   }
 }

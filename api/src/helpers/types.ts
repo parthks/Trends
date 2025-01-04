@@ -1,4 +1,47 @@
-export interface TweetData {
+export type TrendTopic = string
+
+export interface AiAnalyzedData {
+  keyMentions: string[];
+  keyHighlight: string;
+  trendTopics: TrendTopic[];
+}
+
+export interface FullTweetData {
+  id: string;
+  entities: {
+    urls: UrlEntity[];
+    media?: MediaEntity[];
+  };
+  author: XUserInfo;
+  likeCount: number;
+  conversationId: string;
+  fullText: string;
+  createdAt: string;
+  retweet?: FullTweetData;
+  quote?: FullTweetData;
+  text?: string;
+}
+
+interface UrlEntity {
+  url: string;
+  expanded_url: string;
+}
+
+interface MediaEntity {
+  url: string;
+  media_url_https: string;
+  type: string;
+  video_info?: {
+    variants: VideoVariant[];
+  };
+}
+
+interface VideoVariant {
+  bitrate: number;
+  content_type: string;
+  url: string;
+}
+export interface ParsedTweetData {
   id: string;
   media: Media[];
   like_count: number;
@@ -13,8 +56,10 @@ export interface TweetData {
   quote_media?: Media[];
   quote_id?: string;
   quote_user?: string;
-  thread?: TweetData[];
+  thread?: ParsedTweetData[];
 }
+
+export type TypesenseTweetData = ParsedTweetData & AiAnalyzedData
 
 export interface Media {
   original_url: string;
@@ -23,7 +68,7 @@ export interface Media {
   type: string;
 }
 
-export interface UserInfo {
+export interface XUserInfo {
   type: string;
   userName: string;
   url: string;
@@ -56,3 +101,4 @@ export interface UserInfo {
     };
   };
 }
+

@@ -13,14 +13,61 @@ binding = "AI"
 # Durable Objects can live for as long as needed. Use these when you need a long-running "server", such as in realtime apps.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#durable-objects
 [[durable_objects.bindings]]
-name = "USERS"
-class_name = "UsersObject"
+name = "XHANDLES"
+class_name = "XHandlesObject"
 
 # Durable Object migrations.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#migrations
 [[migrations]]
 tag = "v1"
-new_classes = ["UsersObject"]
+new_sqlite_classes = ["XHandlesObject"] # Array of new classes
+
+# Bind an R2 Bucket. Use R2 to store arbitrarily large blobs of data, such as files.
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#r2-buckets
+[[r2_buckets]]
+binding = "TWEETS_BUCKET"
+bucket_name = "tweets"
+
+[[r2_buckets]]
+binding = "ERROR_BUCKET"
+bucket_name = "app_errors"
+
+# Bind a Queue producer. Use this binding to schedule an arbitrary task that may be processed later by a Queue consumer.
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
+[[queues.producers]]
+binding = "ERROR_QUEUE"
+queue = "error-queue"
+
+[[queues.producers]]
+binding = "TWEETS_SCRAPER_QUEUE"
+queue = "tweets-scraper-queue"
+max_concurrency = 10
+
+[[queues.producers]]
+binding = "AI_ANALYZER_QUEUE"
+queue = "ai-analyzer-queue"
+max_batch_size = 1
+max_batch_timeout = 0
+
+[[queues.producers]]
+binding = "SAVE_TWEETS_QUEUE"
+queue = "save-tweets-queue"
+max_batch_size = 40
+max_batch_timeout = 10
+
+# Bind a Queue consumer. Queue Consumers can retrieve tasks scheduled by Producers to act on them.
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
+[[queues.consumers]]
+queue = "error-queue"
+
+[[queues.consumers]]
+queue = "tweets-scraper-queue"
+
+[[queues.consumers]]
+queue = "ai-analyzer-queue"
+
+[[queues.consumers]]
+queue = "save-tweets-queue"
 
 
 # Bind a D1 database. D1 is Cloudflare’s native serverless SQL database.
@@ -90,22 +137,9 @@ enabled = true
 # binding = "MY_CERTIFICATE"
 # certificate_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
-# Bind a Queue producer. Use this binding to schedule an arbitrary task that may be processed later by a Queue consumer.
-# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
-# [[queues.producers]]
-# binding = "MY_QUEUE"
-# queue = "my-queue"
 
-# Bind a Queue consumer. Queue Consumers can retrieve tasks scheduled by Producers to act on them.
-# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
-# [[queues.consumers]]
-# queue = "my-queue"
 
-# Bind an R2 Bucket. Use R2 to store arbitrarily large blobs of data, such as files.
-# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#r2-buckets
-# [[r2_buckets]]
-# binding = "MY_BUCKET"
-# bucket_name = "my-bucket"
+
 
 # Bind another Worker service. Use this binding to call another Worker without network overhead.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings

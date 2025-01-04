@@ -1,8 +1,8 @@
 import Typesense, { Client } from "typesense";
 import { SearchParams } from "typesense/lib/Typesense/Documents";
-import { TweetData } from "../helpers/types";
+import { ParsedTweetData, TypesenseTweetData } from "../helpers/types";
 
-export class SearchClient {
+export class TypesenseClient {
   private client: Client;
 
   constructor(binding: CloudflareBindings) {
@@ -34,7 +34,7 @@ export class SearchClient {
       searchParameters.filter_by = `created_at:${createdAtFilter.toString()}`;
     }
 
-    const searchResults = await this.client.collections<TweetData>("tweets").documents().search(searchParameters);
+    const searchResults = await this.client.collections<ParsedTweetData>("tweets").documents().search(searchParameters);
 
     if (!searchResults.hits) return [];
     const searchDocuments = searchResults.hits.map((hit) => hit.document);
@@ -42,12 +42,12 @@ export class SearchClient {
     return searchDocuments;
   }
 
-  async upsertTweets(tweets: TweetData[]) {
+  async upsertTweets(tweets: TypesenseTweetData[]) {
     if (tweets.length === 0) {
       console.log("No tweets to upsert");
       return;
     }
-    const results = await this.client.collections<TweetData>("tweets").documents().import(tweets, {
+    const results = await this.client.collections<TypesenseTweetData>("tweets").documents().import(tweets, {
       action: "upsert",
     });
     const failedTweets = results.filter((tweet) => tweet.success != true);

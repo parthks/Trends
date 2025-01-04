@@ -1,42 +1,6 @@
-import { Media, TweetData, UserInfo } from "./types";
+import { FullTweetData, Media, ParsedTweetData, XUserInfo } from "./types";
 
-interface Tweet {
-  id: string;
-  entities: {
-    urls: UrlEntity[];
-    media?: MediaEntity[];
-  };
-  author: UserInfo;
-  likeCount: number;
-  conversationId: string;
-  fullText: string;
-  createdAt: string;
-  retweet?: Tweet;
-  quote?: Tweet;
-  text?: string;
-}
-
-interface UrlEntity {
-  url: string;
-  expanded_url: string;
-}
-
-interface MediaEntity {
-  url: string;
-  media_url_https: string;
-  type: string;
-  video_info?: {
-    variants: VideoVariant[];
-  };
-}
-
-interface VideoVariant {
-  bitrate: number;
-  content_type: string;
-  url: string;
-}
-
-const expandUrls = (tweet: Tweet, text: string): string => {
+const expandUrls = (tweet: FullTweetData, text: string): string => {
   const urls: Record<string, string> = {};
   if (tweet.entities.urls.length > 0) {
     tweet.entities.urls.forEach((urlData) => {
@@ -50,7 +14,7 @@ const expandUrls = (tweet: Tweet, text: string): string => {
   return text;
 };
 
-const getMedia = (tweet: Tweet): Media[] => {
+const getMedia = (tweet: FullTweetData): Media[] => {
   const media: Media[] = [];
   if (tweet.entities.media) {
     tweet.entities.media.forEach((mediaData) => {
@@ -82,7 +46,7 @@ const getMedia = (tweet: Tweet): Media[] => {
   return media;
 };
 
-export const parseTweets = (data: Tweet[]): TweetData[] => {
+export const parseTweets = (data: FullTweetData[]): ParsedTweetData[] => {
   // remove duplicate id
   const seenIds = new Set<string>();
   const uniqueTweets = data.filter((tweet) => {
@@ -93,8 +57,8 @@ export const parseTweets = (data: Tweet[]): TweetData[] => {
     return false;
   });
 
-  const tweets: TweetData[] = uniqueTweets.map((tweet) => {
-    const tweetData: TweetData = {
+  const tweets: ParsedTweetData[] = uniqueTweets.map((tweet) => {
+    const tweetData: ParsedTweetData = {
       media: getMedia(tweet),
       id: tweet.id,
       like_count: tweet.likeCount,
@@ -125,7 +89,7 @@ export const parseTweets = (data: Tweet[]): TweetData[] => {
   });
 
   // Create a dictionary to store conversations
-  const conversations: Record<string, TweetData[]> = {};
+  const conversations: Record<string, ParsedTweetData[]> = {};
 
   // First pass: Organize tweets into conversations
   tweets.forEach((tweet) => {
@@ -162,7 +126,7 @@ export const parseTweets = (data: Tweet[]): TweetData[] => {
   });
 };
 
-export const parseUserInfo = (data: Tweet[], userHandle: string): UserInfo => {
+export const parseUserInfo = (data: FullTweetData[], userHandle: string): XUserInfo => {
   const userInfo = data.find((tweet) => tweet.author.userName === userHandle)?.author;
   if (!userInfo) {
     throw new Error("User info not found");
