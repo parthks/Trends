@@ -1,4 +1,5 @@
-import { ParsedTweetData } from "../helpers/types";
+import { AI_PROMPTS } from "../helpers/prompts";
+import { AiAnalyzedData, ParsedTweetData, XUserInfo } from "../helpers/types";
 
 export class LLM {
   private aiClient: CloudflareBindings["AI"];
@@ -44,6 +45,21 @@ export class LLM {
       { gateway: { id: "trends" } }
     );
     return response;
+  }
+
+  async analyzeTweet(tweet: ParsedTweetData, userInfo: XUserInfo): Promise<AiAnalyzedData> {
+    const prompt = AI_PROMPTS.ANALYZE_TWEET.prompt + `\n\nTweet: ${JSON.stringify(tweet)}\n\nUser Info: ${JSON.stringify(userInfo)}`;
+    const systemPrompt = AI_PROMPTS.ANALYZE_TWEET.systemPrompt;
+    const response = await this.aiClient.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt },
+      ],
+    });
+    if (!LLM.hasResponse(response)) {
+      throw new Error("No response from AI");
+    }
+    return { keyMentions: [], keyHighlight: response.response, trendTopics: [] };
   }
 
   private parseTweetsIntoMessage(searchDocuments: ParsedTweetData[]): string {

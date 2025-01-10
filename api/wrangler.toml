@@ -1,7 +1,7 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "api"
 main = "src/index.ts"
-compatibility_date = "2024-12-30"
+compatibility_date = "2024-12-18"
 compatibility_flags = ["nodejs_compat"]
 
 # Bind the Workers AI model catalog. Run machine learning models, powered by serverless GPUs, on Cloudflare’s global network
@@ -30,7 +30,7 @@ bucket_name = "tweets"
 
 [[r2_buckets]]
 binding = "ERROR_BUCKET"
-bucket_name = "app_errors"
+bucket_name = "app-errors"
 
 # Bind a Queue producer. Use this binding to schedule an arbitrary task that may be processed later by a Queue consumer.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
@@ -41,19 +41,15 @@ queue = "error-queue"
 [[queues.producers]]
 binding = "TWEETS_SCRAPER_QUEUE"
 queue = "tweets-scraper-queue"
-max_concurrency = 10
 
 [[queues.producers]]
 binding = "AI_ANALYZER_QUEUE"
 queue = "ai-analyzer-queue"
-max_batch_size = 1
-max_batch_timeout = 0
 
 [[queues.producers]]
 binding = "SAVE_TWEETS_QUEUE"
 queue = "save-tweets-queue"
-max_batch_size = 40
-max_batch_timeout = 10
+
 
 # Bind a Queue consumer. Queue Consumers can retrieve tasks scheduled by Producers to act on them.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
@@ -62,12 +58,22 @@ queue = "error-queue"
 
 [[queues.consumers]]
 queue = "tweets-scraper-queue"
+max_concurrency = 1
+max_batch_size = 1
+max_batch_timeout = 0
+dead_letter_queue = "error-queue"
 
 [[queues.consumers]]
 queue = "ai-analyzer-queue"
+max_batch_size = 1
+max_batch_timeout = 0
+dead_letter_queue = "error-queue"
 
 [[queues.consumers]]
 queue = "save-tweets-queue"
+max_batch_size = 40
+max_batch_timeout = 60
+dead_letter_queue = "error-queue"
 
 
 # Bind a D1 database. D1 is Cloudflare’s native serverless SQL database.

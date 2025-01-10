@@ -27,12 +27,14 @@ export class TypesenseClient {
       per_page: 250,
     };
 
-    if (filter && Object.keys(filter).length > 0) {
+    if (filter && (filter.from || filter.to)) {
       const createdAtFilter = [];
       if (filter.from) createdAtFilter.push(`>=${filter.from}`);
       if (filter.to) createdAtFilter.push(`<=${filter.to}`);
       searchParameters.filter_by = `created_at:${createdAtFilter.toString()}`;
     }
+
+    console.log(filter);
 
     const searchResults = await this.client.collections<ParsedTweetData>("tweets").documents().search(searchParameters);
 

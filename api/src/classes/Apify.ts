@@ -30,7 +30,7 @@ export class Scraper {
     const until = metadata.until ? new Date(metadata.until).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
     const input = {
       searchTerms: ["from:" + userHandle + " until:" + until + " -filter:replies"],
-      maxItems: metadata.maxItems ?? 10,
+      maxItems: metadata.maxItems ?? 50,
       sort: "Latest",
     };
 

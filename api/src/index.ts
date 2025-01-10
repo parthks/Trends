@@ -1,11 +1,12 @@
 import { Hono } from "hono";
 import { Scraper } from "./classes/Apify";
 import { LLM } from "./classes/LLM";
+import { PineconeClient, PineconeNamespace } from "./classes/Pinecone";
+import { R2TweetsStorage } from "./classes/TweetsStorage";
 import { TypesenseClient } from "./classes/Typesense";
 import { XHandle, XHandlesObject } from "./DurableObjects/XHandles";
-import { saveTweets, saveTweetsBody } from "./helpers/services";
-import { aiAnalyze } from "./helpers/services";
-import { tweetsScraper } from "./helpers/services";
+import { AiAnalyzeBody, SavedTweet, TweetsScraperBody, aiAnalyze, saveToPinecone, saveToTypesense, saveTweets, tweetsScraper } from "./helpers/services";
+import { getRandomUUID } from "./helpers/utils";
 
 export { XHandlesObject };
 
@@ -18,36 +19,41 @@ app.onError(async (err, c) => {
     cause: err.cause,
     stack: err.stack,
   };
-  await c.env.ERROR_QUEUE.send(error)
-  return c.json(error, { status: 500 })
-})
+  await c.env.ERROR_QUEUE.send(error);
+  return c.json(error, { status: 500 });
+});
 
 export default {
   fetch: app.fetch,
   async queue(batch: MessageBatch<any>, env: CloudflareBindings) {
-    switch(batch.queue) {
+    switch (batch.queue) {
       case "error-queue":
         for (const message of batch.messages) {
-          const error = message.body as Error
-          await env.ERROR_BUCKET.put(`errors/${Date.now()}.log`, JSON.stringify(error))
+          const error = message.body as Error;
+          await env.ERROR_BUCKET.put(`errors/${Date.now()}.log`, JSON.stringify(error));
         }
         break;
       case "tweets-scraper-queue":
-        // await tweetsScraper(tweetsData, env);
+        const scraperData = batch.messages.map((message) => message.body) as TweetsScraperBody[];
+        for (const data of scraperData) {
+          await tweetsScraper(data, env);
+        }
         break;
       case "ai-analyzer-queue":
-        const aiData = batch.messages.map(message => message.body)
-        // await aiAnalyze(aiData);
+        const aiData = batch.messages.map((message) => message.body) as AiAnalyzeBody[];
+        for (const data of aiData) {
+          await aiAnalyze(data, env);
+        }
         break;
       case "save-tweets-queue":
-        const saveData = batch.messages.map(message => message.body) as saveTweetsBody
+        const saveData = batch.messages.map((message) => message.body) as SavedTweet[];
         await saveTweets(saveData, env);
         break;
       default:
         console.log("unknown queue", batch.queue);
     }
   },
-}
+};
 
 app.get("/", (c) => {
   return c.text("Hello Hono!");
@@ -59,6 +65,58 @@ app.get("/ai", async (c) => {
     return c.text(llmResult.response);
   }
   return c.text("No result");
+});
+
+app.get("/storage/tweets", async (c) => {
+  const tweets = await new R2TweetsStorage(c.env).listTweets();
+  return c.json(tweets);
+});
+
+app.get("/storage/tweets/:id", async (c) => {
+  const id = c.req.param("id");
+  const tweet = await new R2TweetsStorage(c.env).getTweetByID(id);
+  return c.json(tweet);
+});
+
+app.post("/storage/re-save", async (c) => {
+  const body = await c.req.json();
+  const { ids } = body;
+  if (!ids) return c.json({ error: "ids are required" }, 400);
+  const tweets: SavedTweet[] = [];
+  for (const id of ids) {
+    const tweet = await new R2TweetsStorage(c.env).getTweetDataByID(id);
+    if (!tweet) {
+      return c.json({ error: `Tweet ${id} not found` }, 404);
+    }
+    const { aiAnalyzedData } = await aiAnalyze(tweet, c.env);
+    tweets.push({ ...tweet, aiAnalyzedData });
+  }
+  await new R2TweetsStorage(c.env).storeTweets(tweets);
+  await saveToPinecone(tweets, c.env);
+  await saveToTypesense(tweets, c.env);
+  return c.json({ status: "success", count: tweets.length, tweets });
+});
+
+app.post("/ai/tweet/:id", async (c) => {
+  const id = c.req.param("id");
+  const fullTweetData = await new R2TweetsStorage(c.env).getRawFullTweetDataByID(id);
+  if (!fullTweetData) {
+    return c.json({ error: `Tweet ${id} not found` }, 404);
+  }
+  const result = await aiAnalyze({ fullTweetData }, c.env);
+  return c.json(result);
+});
+
+app.post("/scrape/queue/:userId", async (c) => {
+  const userId = c.req.param("userId");
+  const scrapeRequestId = getRandomUUID();
+  const scrapeRequest: TweetsScraperBody = {
+    scrapeRequestId,
+    scrapeRequest: "user",
+    config: { userId },
+  };
+  await c.env.TWEETS_SCRAPER_QUEUE.send(scrapeRequest);
+  return c.json({ scrapeRequestId });
 });
 
 app.get("/scrape/:userId", async (c) => {
@@ -106,6 +164,12 @@ app.get("/search/:query", async (c) => {
   const toParam = to ? parseInt(to) : undefined;
 
   const results = await new TypesenseClient(c.env).search(query, { from: fromParam, to: toParam });
+  return c.json(results);
+});
+
+app.get("/query/:query", async (c) => {
+  const query = c.req.param("query");
+  const results = await new PineconeClient(c.env).query(query, PineconeNamespace.TWEETS);
   return c.json(results);
 });
 

@@ -6,6 +6,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
+    "@pinecone-database/pinecone": "^4.1.0",
     "apify-client": "^2.11.0",
     "fauna": "^2.4.1",
     "hono": "^4.6.15",
