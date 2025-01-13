@@ -1,5 +1,6 @@
 import { AI_PROMPTS } from "../helpers/prompts";
 import { AiAnalyzedData, ParsedTweetData, XUserInfo } from "../helpers/types";
+import { runWithTools } from "@cloudflare/ai-utils";
 
 export class LLM {
   private aiClient: CloudflareBindings["AI"];
@@ -8,13 +9,13 @@ export class LLM {
   }
 
   static hasResponse(output: AiTextGenerationOutput): output is {
-    response: string;
+    response: string | undefined;
     tool_calls?: {
       name: string;
       arguments: unknown;
     }[];
   } {
-    return output !== null && typeof output === "object" && !output.constructor?.name?.includes("ReadableStream") && "response" in output && typeof output.response === "string";
+    return output !== null && typeof output === "object" && !output.constructor?.name?.includes("ReadableStream");
   }
 
   async introduce(prompt: string) {
@@ -48,18 +49,64 @@ export class LLM {
   }
 
   async analyzeTweet(tweet: ParsedTweetData, userInfo: XUserInfo): Promise<AiAnalyzedData> {
-    const prompt = AI_PROMPTS.ANALYZE_TWEET.prompt + `\n\nTweet: ${JSON.stringify(tweet)}\n\nUser Info: ${JSON.stringify(userInfo)}`;
-    const systemPrompt = AI_PROMPTS.ANALYZE_TWEET.systemPrompt;
+    const systemPrompt = `
+    You are an AI specialized in analyzing tweets. Your task is to extract specific semantic information from each tweet and structure your response using the generateJSONFormat function. Focus solely on the following properties: keyHighlight, keyTopics, and keyUsers. Ensure the JSON output strictly adheres to the specified format.
+    `;
+
+    const prompt = `
+    Analyze the following tweet and return a JSON response using the generateJSONFormat function. Extract and include only the following properties:
+    
+    1. **keyHighlight**: Provide a concise summary or the main highlight of the tweet.
+    2. **keyTopics**: List key topics or entities (such as subjects, themes, or significant concepts) mentioned in and related to the tweet. Ensure consistency across similar tweets for effective clustering.
+    3. **keyUsers**: List user handles mentioned or related to the tweet.
+    4. **keyEntities**: List key entities (such as token names, websites, products, events) mentioned in and related to the tweet. **Do not include user handles or mentions in this list that are already included in keyUsers.**
+
+    **Tweet:** ${JSON.stringify(tweet)}
+    **User Info:** ${JSON.stringify(userInfo)}
+    `;
+
     const response = await this.aiClient.run("@cf/meta/llama-3.3-70b-instruct-fp8-fast", {
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: prompt },
       ],
+      tools: [
+        {
+          name: "generateJSONFormat",
+          description: "Use this function to format your response as JSON",
+          parameters: {
+            type: "object",
+            properties: {
+              keyHighlight: {
+                type: "string",
+                description: "The key highlight in the tweet",
+              },
+              keyEntities: {
+                type: "array",
+                description: "Strings of key entities such as token names, websites, products, events mentioned in the tweet",
+              },
+              keyTopics: {
+                type: "array",
+                description: "Strings of key topics or entities mentioned in and related to the tweet",
+              },
+              keyUsers: {
+                type: "array",
+                description: "Strings of key users mentioned in and related to the tweet",
+              },
+            },
+            required: ["keyHighlight", "keyTopics", "keyUsers", "keyEntities"],
+          },
+        },
+      ],
     });
+
     if (!LLM.hasResponse(response)) {
       throw new Error("No response from AI");
     }
-    return { keyMentions: [], keyHighlight: response.response, trendTopics: [] };
+
+    const extractedData = response.tool_calls?.[0]?.arguments as AiAnalyzedData;
+
+    return extractedData;
   }
 
   private parseTweetsIntoMessage(searchDocuments: ParsedTweetData[]): string {

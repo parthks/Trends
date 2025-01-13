@@ -1,9 +1,10 @@
-export type TrendTopic = string
+export type TrendTopic = string;
 
 export interface AiAnalyzedData {
-  keyMentions: string[];
+  keyUsers: string[];
+  keyTopics: string[];
+  keyEntities: string[];
   keyHighlight: string;
-  trendTopics: TrendTopic[];
 }
 
 export interface FullTweetData {
@@ -59,7 +60,7 @@ export interface ParsedTweetData {
   thread?: ParsedTweetData[];
 }
 
-export type TypesenseTweetData = ParsedTweetData & AiAnalyzedData
+export type TypesenseTweetData = ParsedTweetData & AiAnalyzedData;
 
 export interface Media {
   original_url: string;
@@ -101,4 +102,3 @@ export interface XUserInfo {
     };
   };
 }
-

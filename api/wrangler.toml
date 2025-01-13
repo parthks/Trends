@@ -9,6 +9,12 @@ compatibility_flags = ["nodejs_compat"]
 [ai]
 binding = "AI"
 
+# Bind a KV Namespace. Use KV as persistent storage for small key-value pairs.
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#kv-namespaces
+[[kv_namespaces]]
+binding = "SCRAPE_REQUESTS_KV"
+id = "e9d8bb2f8b7a4056a8e0f9fe6036d1a3"
+
 # Bind a Durable Object. Durable objects are a scale-to-zero compute primitive based on the actor model.
 # Durable Objects can live for as long as needed. Use these when you need a long-running "server", such as in realtime apps.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#durable-objects
@@ -16,11 +22,19 @@ binding = "AI"
 name = "XHANDLES"
 class_name = "XHandlesObject"
 
+[[durable_objects.bindings]]
+name = "SCRAPE_REQUESTS"
+class_name = "ScrapeRequestsObject"
+
 # Durable Object migrations.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#migrations
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["XHandlesObject"] # Array of new classes
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ScrapeRequestsObject"]
 
 # Bind an R2 Bucket. Use R2 to store arbitrarily large blobs of data, such as files.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#r2-buckets
@@ -131,11 +145,7 @@ enabled = true
 # binding = "MY_HYPERDRIVE"
 # id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
-# Bind a KV Namespace. Use KV as persistent storage for small key-value pairs.
-# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#kv-namespaces
-# [[kv_namespaces]]
-# binding = "MY_KV_NAMESPACE"
-# id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
 
 # Bind an mTLS certificate. Use to present a client certificate when communicating with another service.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#mtls-certificates

@@ -4,8 +4,10 @@ type PineconeRecordMetadata = {
   text: string;
   scrapeRequestId?: string;
   user?: string;
-  keyMentions?: string[];
-  trendTopics?: string[];
+  keyUsers?: string[];
+  keyTopics?: string[];
+  keyEntities?: string[];
+  keyHighlight?: string;
 };
 
 export type InputPineconeRecordMetadata = Omit<PineconeRecordMetadata, "text">;

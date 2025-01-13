@@ -1,5 +1,5 @@
-import { SavedTweet } from "../helpers/services";
-import { FullTweetData, ParsedTweetData } from "../helpers/types";
+import { SavedTweet } from "../helpers/services/saving";
+import { FullTweetData } from "../helpers/types";
 
 const TWEETS_LOCATION = "tweets";
 const RAW_TWEETS_LOCATION = "tweets/raw";
