@@ -2,7 +2,7 @@ import { InputPineconeRecordMetadata, PineconeClient } from "../../classes/Pinec
 import { R2TweetsStorage } from "../../classes/TweetsStorage";
 import { TypesenseClient } from "../../classes/Typesense";
 import { parseUserInfo } from "../parse";
-import { FullTweetData, ParsedTweetData, AiAnalyzedData } from "../types";
+import { AiAnalyzedData, FullTweetData, ParsedTweetData, TypesenseTweetData } from "../types";
 import { getXHandleDO } from "../utils";
 
 export type SavedTweet = {
@@ -28,31 +28,45 @@ export const saveTweets = async (body: SavedTweet[], env: CloudflareBindings) =>
       body.map((tweet) => tweet.fullTweetData),
       handle
     );
-    console.log("calling upsertNewTweets");
+    console.log("calling upsertNewTweets with ", handleParsedTweets.length, "tweets for handle", handle);
     await xHandleDO.upsertNewTweets(handleParsedTweets, userInfo);
   }
   // const trend = await Trend.getTrend(trends);
 };
 
 export const saveToTypesense = async (body: SavedTweet[], env: CloudflareBindings) => {
+  // check aiAnalyzedData has all the fields, else add empty json object
+  for (const tweet of body) {
+    if (!tweet.aiAnalyzedData) {
+      tweet.aiAnalyzedData = {
+        keyHighlight: "",
+        keyEntities: [],
+        keyTopics: [],
+        keyUsers: [],
+      };
+    }
+    if (!tweet.aiAnalyzedData.keyEntities) {
+      tweet.aiAnalyzedData.keyEntities = [];
+    }
+    if (!tweet.aiAnalyzedData.keyTopics) {
+      tweet.aiAnalyzedData.keyTopics = [];
+    }
+    if (!tweet.aiAnalyzedData.keyUsers) {
+      tweet.aiAnalyzedData.keyUsers = [];
+    }
+    if (!tweet.aiAnalyzedData.keyHighlight) {
+      tweet.aiAnalyzedData.keyHighlight = "";
+    }
+  }
+
   // save to Typesense
   const typesense = new TypesenseClient(env);
   const typesenseTweetData = body.map((tweet) => ({
     ...tweet.parsedTweetData,
     ...tweet.aiAnalyzedData,
+    scrapeRequestId: tweet.scrapeRequestId,
   }));
   await typesense.upsertTweets(typesenseTweetData);
-};
-
-const makePineconeMetadata = (tweet: SavedTweet): InputPineconeRecordMetadata => {
-  return {
-    user: tweet.parsedTweetData.user,
-    scrapeRequestId: tweet.scrapeRequestId,
-    keyUsers: tweet.aiAnalyzedData.keyUsers,
-    keyTopics: tweet.aiAnalyzedData.keyTopics,
-    keyEntities: tweet.aiAnalyzedData.keyEntities,
-    keyHighlight: tweet.aiAnalyzedData.keyHighlight,
-  };
 };
 
 export const saveToPinecone = async (body: SavedTweet[], env: CloudflareBindings) => {
@@ -62,7 +76,7 @@ export const saveToPinecone = async (body: SavedTweet[], env: CloudflareBindings
     .map((tweet) => ({
       tweet_id: tweet.parsedTweetData.id,
       text: (tweet.parsedTweetData.quote ?? "") + (tweet.parsedTweetData.text ?? ""),
-      metadata: makePineconeMetadata(tweet),
+      metadata: pinecone.serializeToPineconeMetadata(tweet),
     }))
     .filter((tweet) => !!tweet.text);
 
@@ -72,7 +86,7 @@ export const saveToPinecone = async (body: SavedTweet[], env: CloudflareBindings
     .map((tweet) => ({
       tweet_id: tweet.parsedTweetData.id,
       text: tweet.aiAnalyzedData.keyHighlight,
-      metadata: makePineconeMetadata(tweet),
+      metadata: pinecone.serializeToPineconeMetadata(tweet),
     }))
     .filter((tweet) => !!tweet.text);
 

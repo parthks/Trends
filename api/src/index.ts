@@ -10,10 +10,13 @@ import { getScrapeRequestDO, getXHandleDO } from "./helpers/utils";
 import { AiAnalyzeBody, aiAnalyze, aiAnalyzeInQueue } from "./helpers/services/aiAnalyzing";
 import { SavedTweet, saveTweets, saveToPinecone, saveToTypesense } from "./helpers/services/saving";
 import { TweetsScraperBody, tweetsScraper } from "./helpers/services/scraping";
+import { cors } from "hono/cors";
+import { parseTweets, parseUserInfo } from "./helpers/parse";
 
 export { XHandlesObject, ScrapeRequestsObject };
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
+app.use("*", cors());
 
 app.onError(async (err, c) => {
   const error = {
@@ -50,7 +53,7 @@ export default {
           await aiAnalyzeInQueue(data, env);
           if (data.scrapeRequestId) {
             const stub = getScrapeRequestDO(env, data.scrapeRequestId);
-            await stub.doneAiAnalyzing(data.fullTweetData.id);
+            await stub.doneAiAnalyzing(data.parsedTweetData.id);
           }
         }
         break;
@@ -102,8 +105,10 @@ app.post("/storage/re-save", async (c) => {
     if (!tweet) {
       return c.json({ error: `Tweet ${id} not found` }, 404);
     }
+    tweet.parsedTweetData = parseTweets([tweet.fullTweetData])[0];
     if (run_ai_analyze) {
-      const { aiAnalyzedData } = await aiAnalyze(tweet, c.env);
+      const userInfo = parseUserInfo([tweet.fullTweetData], tweet.parsedTweetData.user);
+      const { aiAnalyzedData } = await aiAnalyze({ parsedTweetData: tweet.parsedTweetData, userInfo }, c.env);
       tweet.aiAnalyzedData = aiAnalyzedData;
     }
     tweets.push({ ...tweet });
@@ -118,7 +123,9 @@ app.post("/ai/tweet/:id", async (c) => {
   if (!fullTweetData) {
     return c.json({ error: `Tweet ${id} not found` }, 404);
   }
-  const result = await aiAnalyze({ fullTweetData }, c.env);
+  const parsedTweetData = parseTweets([fullTweetData]);
+  const userInfo = parseUserInfo([fullTweetData], parsedTweetData[0].user);
+  const result = await aiAnalyze({ parsedTweetData: parsedTweetData[0], userInfo }, c.env);
   return c.json(result);
 });
 
@@ -204,14 +211,21 @@ app.post("/scrape/:userId", async (c) => {
 //   });
 // });
 
-app.get("/search/:query", async (c) => {
-  const query = c.req.param("query");
+app.delete("/search", async (c) => {
+  await new R2TweetsStorage(c.env).deleteAll();
+  await new TypesenseClient(c.env).deleteAll();
+  await new PineconeClient(c.env).deleteAll();
+  return c.json({ status: "success" });
+});
+
+app.get("/search", async (c) => {
+  const query = c.req.query("query");
   const from = c.req.query("from");
   const to = c.req.query("to");
   const fromParam = from ? parseInt(from) : undefined;
   const toParam = to ? parseInt(to) : undefined;
 
-  const results = await new TypesenseClient(c.env).search(query, { from: fromParam, to: toParam });
+  const results = await new TypesenseClient(c.env).search(query ?? "", { from: fromParam, to: toParam });
   return c.json(results);
 });
 
@@ -252,7 +266,8 @@ app.get("/search/summary/:query", async (c) => {
   const toParam = to ? parseInt(to) : undefined;
 
   const results = await new TypesenseClient(c.env).search(query, { from: fromParam, to: toParam });
-  const summary = await new LLM(c.env).summarizeTweets(results);
+  if (!results.hits) return c.json({ error: "No result" }, 500);
+  const summary = await new LLM(c.env).summarizeTweets(results.hits.map((hit) => hit.document));
   if (LLM.hasResponse(summary)) {
     return c.json({ summary: summary.response, prompt: summary, results });
   }

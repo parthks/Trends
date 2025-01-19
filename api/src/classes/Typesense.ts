@@ -1,6 +1,7 @@
 import Typesense, { Client } from "typesense";
 import { SearchParams } from "typesense/lib/Typesense/Documents";
 import { ParsedTweetData, TypesenseTweetData } from "../helpers/types";
+import { ImportError } from "typesense/lib/Typesense/Errors";
 
 export class TypesenseClient {
   private client: Client;
@@ -22,9 +23,10 @@ export class TypesenseClient {
   async search(query: string, filter?: { from?: number; to?: number }) {
     const searchParameters: SearchParams = {
       q: query,
-      query_by: "text, quote, retweet ",
+      query_by: "text, quote, retweet, user, quote_user, keyTopics, keyEntities",
       sort_by: "_text_match:desc,created_at:desc",
       per_page: 250,
+      facet_by: "keyTopics,keyEntities,keyUsers",
     };
 
     if (filter && (filter.from || filter.to)) {
@@ -38,10 +40,7 @@ export class TypesenseClient {
 
     const searchResults = await this.client.collections<ParsedTweetData>("tweets").documents().search(searchParameters);
 
-    if (!searchResults.hits) return [];
-    const searchDocuments = searchResults.hits.map((hit) => hit.document);
-
-    return searchDocuments;
+    return searchResults;
   }
 
   async upsertTweets(tweets: TypesenseTweetData[]) {
@@ -49,12 +48,26 @@ export class TypesenseClient {
       console.log("No tweets to upsert");
       return;
     }
-    const results = await this.client.collections<TypesenseTweetData>("tweets").documents().import(tweets, {
-      action: "upsert",
-    });
-    const failedTweets = results.filter((tweet) => tweet.success != true);
-    if (failedTweets.length > 0) {
-      throw new Error("Failed to upsert some tweets");
+    try {
+      const results = await this.client.collections<TypesenseTweetData>("tweets").documents().import(tweets, {
+        action: "upsert",
+      });
+      return results;
+    } catch (error) {
+      const importError = error as ImportError;
+      console.error("Error upserting tweets", importError.importResults);
+      if (importError.importResults) {
+        throw new Error("Failed to upsert some tweets", {
+          cause: importError.importResults,
+        });
+      }
+      throw error;
     }
+  }
+
+  async deleteAll() {
+    await this.client.collections("tweets").documents().delete({
+      filter_by: "scrapeRequestId:!=null",
+    });
   }
 }

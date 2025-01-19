@@ -11,6 +11,15 @@ export class R2TweetsStorage {
     this.bucket = binding.TWEETS_BUCKET;
   }
 
+  async deleteAll() {
+    const result = await this.bucket.list({ include: ["customMetadata"], limit: 1000 });
+    for (const obj of result.objects) {
+      if (obj.key.startsWith(RAW_TWEETS_LOCATION)) continue;
+      console.log("Deleting tweet: " + obj.key);
+      await this.bucket.delete(obj.key);
+    }
+  }
+
   async listTweets(): Promise<string[]> {
     const result = await this.bucket.list({ include: ["customMetadata"], limit: 1000 });
     return result.objects.map((obj) => obj.key);

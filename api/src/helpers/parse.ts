@@ -23,7 +23,7 @@ const getMedia = (tweet: FullTweetData): Media[] => {
         // find the highest bitrate video and content_type = 'video/mp4'
         const highestBitrateVideo = variants.reduce(
           (max, variant) => (variant.content_type === "video/mp4" && (!max || variant.bitrate > max.bitrate) ? variant : max),
-          variants[0]
+          variants.find((variant) => variant.content_type === "video/mp4")
         );
 
         if (highestBitrateVideo) {

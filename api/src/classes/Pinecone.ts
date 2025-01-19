@@ -1,4 +1,6 @@
 import { Index, Pinecone } from "@pinecone-database/pinecone";
+import { TypesenseTweetData } from "../helpers/types";
+import { SavedTweet } from "../helpers/services/saving";
 
 type PineconeRecordMetadata = {
   text: string;
@@ -10,13 +12,16 @@ type PineconeRecordMetadata = {
   keyHighlight?: string;
 };
 
-export type InputPineconeRecordMetadata = Omit<PineconeRecordMetadata, "text">;
+export type InputPineconeRecordMetadata = Omit<TypesenseTweetData, "media" | "quote_media"> & {
+  media: string;
+  quote_media: string;
+};
 
 export type QueryTweetsOutput = {
   tweet_id: string;
   score: number | undefined;
   text: string;
-  metadata: InputPineconeRecordMetadata;
+  metadata: TypesenseTweetData;
 };
 
 type InputPineconeTweetData = {
@@ -104,7 +109,38 @@ export class PineconeClient {
       tweet_id: m.id,
       score: m.score,
       text: m.metadata!.text!,
-      metadata: m.metadata!,
+      metadata: this.deserializeFromPineconeMetadata(m.metadata as InputPineconeRecordMetadata),
     }));
+  }
+
+  serializeToPineconeMetadata = (tweet: SavedTweet): InputPineconeRecordMetadata => {
+    const media = JSON.stringify(tweet.parsedTweetData.media);
+    const quote_media = JSON.stringify(tweet.parsedTweetData.quote_media);
+    return {
+      ...tweet.parsedTweetData,
+      ...tweet.aiAnalyzedData,
+      scrapeRequestId: tweet.scrapeRequestId,
+      media,
+      quote_media,
+    };
+  };
+
+  deserializeFromPineconeMetadata = (metadata: InputPineconeRecordMetadata): TypesenseTweetData => {
+    const media = JSON.parse(metadata.media || "[]");
+    const quote_media = JSON.parse(metadata.quote_media || "[]");
+    return {
+      ...metadata,
+      media,
+      quote_media,
+    };
+  };
+
+  async deleteAll(namespace?: PineconeNamespace) {
+    if (!namespace) {
+      await this.index.namespace(PineconeNamespace.TWEETS).deleteAll();
+      await this.index.namespace(PineconeNamespace.AI_HIGHLIGHTS).deleteAll();
+    } else {
+      await this.index.namespace(namespace).deleteAll();
+    }
   }
 }

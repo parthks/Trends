@@ -48,9 +48,9 @@ type DoneScrapingTweetsBody = {
   userInfo: XUserInfo;
 };
 const doneScrapingTweets = async (scrapeRequestId: string, body: DoneScrapingTweetsBody, env: CloudflareBindings) => {
-  const { fullTweetData } = body;
+  const { fullTweetData, parsedTweetData, userInfo } = body;
   await new R2TweetsStorage(env).storeRawFullTweets(fullTweetData);
 
   const stub = getScrapeRequestDO(env, scrapeRequestId);
-  await stub.doneScraping(fullTweetData);
+  await stub.doneScraping(parsedTweetData, userInfo);
 };

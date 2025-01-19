@@ -60,7 +60,10 @@ export interface ParsedTweetData {
   thread?: ParsedTweetData[];
 }
 
-export type TypesenseTweetData = ParsedTweetData & AiAnalyzedData;
+export type TypesenseTweetData = ParsedTweetData &
+  AiAnalyzedData & {
+    scrapeRequestId?: string;
+  };
 
 export interface Media {
   original_url: string;

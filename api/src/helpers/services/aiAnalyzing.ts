@@ -1,18 +1,24 @@
 import { LLM } from "../../classes/LLM";
-import { parseTweets, parseUserInfo } from "../parse";
-import { FullTweetData } from "../types";
+import { R2TweetsStorage } from "../../classes/TweetsStorage";
+import { ParsedTweetData, XUserInfo } from "../types";
 import { SavedTweet } from "./saving";
 
 export type AiAnalyzeBody = {
   scrapeRequestId?: string;
-  fullTweetData: FullTweetData;
+  parsedTweetData: ParsedTweetData;
+  userInfo: XUserInfo;
 };
 export const aiAnalyzeInQueue = async (body: AiAnalyzeBody, env: CloudflareBindings) => {
   const result = await aiAnalyze(body, env);
 
+  const fullTweetData = await new R2TweetsStorage(env).getRawFullTweetDataByID(result.parsedTweetData.id);
+  if (!fullTweetData) {
+    throw new Error("aiAnalyzeInQueue: Failed to get full tweet data from R2 storage");
+  }
+
   const saveTweetsBody: SavedTweet = {
     scrapeRequestId: body.scrapeRequestId,
-    fullTweetData: body.fullTweetData,
+    fullTweetData: fullTweetData,
     parsedTweetData: result.parsedTweetData,
     aiAnalyzedData: result.aiAnalyzedData,
   };
@@ -20,13 +26,11 @@ export const aiAnalyzeInQueue = async (body: AiAnalyzeBody, env: CloudflareBindi
 };
 
 export const aiAnalyze = async (body: AiAnalyzeBody, env: CloudflareBindings) => {
-  const { scrapeRequestId, fullTweetData } = body;
-
-  const parsedTweetsData = parseTweets([fullTweetData]);
-  const parsedTweetData = parsedTweetsData[0];
-  const userInfo = parseUserInfo([fullTweetData], parsedTweetData.user);
+  const { scrapeRequestId, parsedTweetData, userInfo } = body;
 
   const llm = new LLM(env);
   const aiAnalyzedData = await llm.analyzeTweet(parsedTweetData, userInfo);
+  // fix user names, if they do start with @, add the @
+  aiAnalyzedData.keyUsers = aiAnalyzedData.keyUsers.map((user) => (user.startsWith("@") ? user : `@${user}`));
   return { scrapeRequestId, userInfo, parsedTweetData, aiAnalyzedData };
 };

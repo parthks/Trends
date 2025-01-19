@@ -75,13 +75,14 @@ export class ScrapeRequestsObject extends DurableObject {
     await this.saveData();
   }
 
-  async doneScraping(fullTweetData: FullTweetData[]) {
-    this.scrapeState.scrapedTweetIds = fullTweetData.map((fullTweet) => fullTweet.id);
+  async doneScraping(parsedTweetData: ParsedTweetData[], userInfo: XUserInfo) {
+    this.scrapeState.scrapedTweetIds = parsedTweetData.map((parsedTweet) => parsedTweet.id);
 
-    for (const tweetData of fullTweetData) {
+    for (const tweetData of parsedTweetData) {
       const body: AiAnalyzeBody = {
         scrapeRequestId: this.scrapeState.scrapeRequestId,
-        fullTweetData: tweetData,
+        parsedTweetData: tweetData,
+        userInfo,
       };
       this.scrapeState.scrapedTweetIds = removeDuplicates([...(this.scrapeState.scrapedTweetIds || []), tweetData.id]);
       await this.AI_ANALYZER_QUEUE.send(body);
