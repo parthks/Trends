@@ -6,6 +6,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+!tsconfig.app.json
+!tsconfig.json
+!tsconfig.node.json
 
 node_modules
 dist
