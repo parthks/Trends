@@ -1,4 +1,4 @@
-import { API_URL } from "./index";
+import { API_URL } from "@/lib/utils";
 
 export const searchAPI = async (query: string, filterOptions?: Record<string, unknown>) => {
   // add all filterOptions to the query string

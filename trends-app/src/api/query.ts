@@ -1,4 +1,4 @@
-import { API_URL } from "./index";
+import { API_URL } from "@/lib/utils";
 
 export const queryAPI = async (_: RequestInfo | URL, init?: RequestInit) => {
   const response = fetch(`${API_URL}/ai/query`, {
