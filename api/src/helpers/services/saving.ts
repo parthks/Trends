@@ -1,13 +1,10 @@
-import { InputPineconeRecordMetadata, PineconeClient } from "../../classes/Pinecone";
+import { PineconeClient } from "../../classes/Pinecone";
 import { R2TweetsStorage } from "../../classes/TweetsStorage";
 import { TypesenseClient } from "../../classes/Typesense";
-import { parseUserInfo } from "../parse";
-import { AiAnalyzedData, FullTweetData, ParsedTweetData, TypesenseTweetData } from "../types";
-import { getXHandleDO } from "../utils";
+import { AiAnalyzedData, ParsedTweetData } from "../types";
 
 export type SavedTweet = {
   scrapeRequestId?: string;
-  fullTweetData: FullTweetData;
   parsedTweetData: ParsedTweetData;
   aiAnalyzedData: AiAnalyzedData;
 };
@@ -20,17 +17,18 @@ export const saveTweets = async (body: SavedTweet[], env: CloudflareBindings) =>
   await saveToTypesense(body, env);
 
   // call Trend and XHandle DOs
-  const handles = body.map((tweet) => tweet.parsedTweetData.user);
-  for (const handle of handles) {
-    const xHandleDO = getXHandleDO(env, handle);
-    const handleParsedTweets = body.filter((tweet) => tweet.parsedTweetData.user === handle).map((tweet) => tweet.parsedTweetData);
-    const userInfo = parseUserInfo(
-      body.map((tweet) => tweet.fullTweetData),
-      handle
-    );
-    console.log("calling upsertNewTweets with ", handleParsedTweets.length, "tweets for handle", handle);
-    await xHandleDO.upsertNewTweets(handleParsedTweets, userInfo);
-  }
+  // const handles = body.map((tweet) => tweet.parsedTweetData.user);
+  // const uniqueHandles = [...new Set(handles)];
+  // for (const handle of uniqueHandles) {
+  //   const xHandleDO = getXHandleDO(env, handle);
+  //   const handleParsedTweets = body.filter((tweet) => tweet.parsedTweetData.user === handle).map((tweet) => tweet.parsedTweetData);
+  //   const userInfo = parseUserInfo(
+  //     body.map((tweet) => tweet.fullTweetData),
+  //     handle
+  //   );
+  //   console.log("calling upsertNewTweets with ", handleParsedTweets.length, "tweets for handle", handle);
+  //   await xHandleDO.upsertNewTweets(handleParsedTweets, userInfo);
+  // }
   // const trend = await Trend.getTrend(trends);
 };
 

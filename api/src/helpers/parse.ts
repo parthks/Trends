@@ -50,6 +50,7 @@ export const parseTweets = (data: FullTweetData[]): ParsedTweetData[] => {
   // remove duplicate id
   const seenIds = new Set<string>();
   const uniqueTweets = data.filter((tweet) => {
+    if (!tweet?.id) return false;
     if (!seenIds.has(tweet.id)) {
       seenIds.add(tweet.id);
       return true;
@@ -59,30 +60,50 @@ export const parseTweets = (data: FullTweetData[]): ParsedTweetData[] => {
 
   const tweets: ParsedTweetData[] = uniqueTweets.map((tweet) => {
     const tweetData: ParsedTweetData = {
-      media: getMedia(tweet),
       id: tweet.id,
+      media: getMedia(tweet),
       like_count: tweet.likeCount,
-      user: tweet.author.userName,
+      user_id: tweet.author.id,
+      user_name: tweet.author.userName,
       created_at: new Date(tweet.createdAt).getTime(),
+      conversation_id: tweet.conversationId,
+      is_reply: !!tweet.isReply,
+      is_quote: !!tweet.isQuote,
+      sourced_from_retweet: !!tweet.isRetweet,
     };
 
-    if (tweet.conversationId !== tweet.id) {
-      tweetData.conversation_id = tweet.conversationId;
-    }
-
-    if (tweet.retweet) {
-      tweetData.retweet = expandUrls(tweet.retweet, tweet.retweet.text!);
-      tweetData.original_tweet_id = tweet.retweet.id;
-      tweetData.retweet_user = tweet.retweet.author.userName;
+    if (tweet.isRetweet && tweet.retweet) {
+      // if its a retweet, we are going to store the original tweet.
+      tweetData.sourced_from_retweet_by_tweet_id = tweet.id;
+      tweetData.sourced_from_retweet_by_user_id = tweet.retweet.author.id;
+      tweetData.sourced_from_retweet_by_user_name = tweet.retweet.author.userName;
+      tweetData.id = tweet.retweet.id;
+      tweetData.media = getMedia(tweet.retweet);
+      tweetData.like_count = tweet.retweet.likeCount;
+      tweetData.user_id = tweet.retweet.author.id;
+      tweetData.user_name = tweet.retweet.author.userName;
+      // should'nt a retweet have to definitely have text...
+      if (tweet.retweet.text) tweetData.text = expandUrls(tweet.retweet, tweet.retweet.text);
+      tweetData.created_at = new Date(tweet.retweet.createdAt).getTime();
+      tweetData.conversation_id = tweet.retweet.conversationId;
+      tweetData.is_reply = false;
+      tweetData.is_quote = false;
     } else {
-      tweetData.text = expandUrls(tweet, tweet.fullText);
-    }
+      if (tweet.isReply && tweet.inReplyToId) {
+        tweetData.reply_to_tweet_id = tweet.inReplyToId;
+        tweetData.reply_to_user_id = tweet.inReplyToUserId;
+        tweetData.reply_to_user_name = tweet.inReplyToUsername;
+      } else {
+        tweetData.text = expandUrls(tweet, tweet.text ?? "");
+      }
 
-    if (tweet.quote) {
-      tweetData.quote = expandUrls(tweet.quote, tweet.quote.text!);
-      tweetData.quote_media = getMedia(tweet.quote);
-      tweetData.quote_id = tweet.quote.id;
-      tweetData.quote_user = tweet.quote.author.userName;
+      if (tweet.isQuote && tweet.quote) {
+        tweetData.quote = expandUrls(tweet.quote, tweet.quote.text!);
+        tweetData.quote_media = getMedia(tweet.quote);
+        tweetData.quote_tweet_id = tweet.quote.id;
+        tweetData.quote_user_id = tweet.quote.author.id;
+        tweetData.quote_user_name = tweet.quote.author.userName;
+      }
     }
 
     return tweetData;
@@ -101,35 +122,13 @@ export const parseTweets = (data: FullTweetData[]): ParsedTweetData[] => {
     }
   });
 
-  // Second pass: Add replies to their parent tweets and remove them from the main list
-  return tweets.filter((tweet) => {
-    if (conversations[tweet.id]) {
-      // This tweet has replies
-      // Sort conversations by createdAt date
-      tweet.thread = conversations[tweet.id].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-
-      // combine the media of the tweet and the thread
-      const threadMedia = tweet.thread.flatMap((t) => t.media);
-      const quoteMedia = tweet.thread.flatMap((t) => t.quote_media || []);
-      tweet.media = [...tweet.media, ...threadMedia, ...quoteMedia];
-
-      // combine the text of the tweet and the thread
-      if (tweet.text) {
-        tweet.text = [tweet.text, ...tweet.thread.map((t) => t.text)].filter(Boolean).join(". ");
-      }
-
-      // Keep the parent tweet
-      return true;
-    }
-    // Remove reply tweets
-    return !tweet.conversation_id;
-  });
+  return tweets;
 };
 
-export const parseUserInfo = (data: FullTweetData[], userHandle: string): XUserInfo => {
-  const userInfo = data.find((tweet) => tweet.author.userName === userHandle)?.author;
-  if (!userInfo) {
-    throw new Error("User info not found");
-  }
-  return userInfo;
-};
+// export const parseUserInfo = (data: FullTweetData[], userHandle: string): XUserInfo => {
+//   const userInfo = data.find((tweet) => tweet.author.userName === userHandle)?.author;
+//   if (!userInfo) {
+//     throw new Error("User info not found");
+//   }
+//   return userInfo;
+// };

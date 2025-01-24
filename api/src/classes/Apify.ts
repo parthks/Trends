@@ -1,5 +1,6 @@
 import { ApifyClient } from "apify-client";
-import { parseTweets, parseUserInfo } from "../helpers/parse";
+import { parseTweets } from "../helpers/parse";
+import { FullTweetData, ParsedTweetData } from "../helpers/types";
 
 interface ScrapeMetadata {
   maxItems?: number;
@@ -25,11 +26,11 @@ export class Scraper {
   //   });
   // }
 
-  async scrapeUserTweets(userHandle: string, metadata: ScrapeMetadata) {
+  async scrapeUserTweets(userHandle: string, metadata: ScrapeMetadata): Promise<{ fullTweetData: FullTweetData[] }> {
     // Prepare Actor input
     const until = metadata.until ? new Date(metadata.until).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
     const input = {
-      searchTerms: ["from:" + userHandle + " until:" + until + " -filter:replies"],
+      searchTerms: ["from:" + userHandle + " until:" + until], // + " -filter:replies"],
       maxItems: metadata.maxItems ?? 10,
       sort: "Latest",
     };
@@ -52,9 +53,8 @@ export class Scraper {
         throw new Error("Failed to scrape user tweets");
       }
     }
-    const tweets = parseTweets(items as any[]);
-    const userInfo = parseUserInfo(items as any[], userHandle);
+    const tweets = items as unknown as FullTweetData[];
 
-    return { fullTweetData: items as any[], parsedTweetData: tweets, userInfo };
+    return { fullTweetData: tweets };
   }
 }

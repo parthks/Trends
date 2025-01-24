@@ -31,12 +31,12 @@ export class TypesenseClient {
 
     if (filter && (filter.from || filter.to)) {
       const createdAtFilter = [];
-      if (filter.from) createdAtFilter.push(`>=${filter.from}`);
-      if (filter.to) createdAtFilter.push(`<=${filter.to}`);
-      searchParameters.filter_by = `created_at:${createdAtFilter.toString()}`;
+      if (filter.from) createdAtFilter.push(`created_at:>=${filter.from}`);
+      if (filter.to) createdAtFilter.push(`created_at:<=${filter.to}`);
+      searchParameters.filter_by = createdAtFilter.join(" && ");
     }
 
-    console.log(filter);
+    console.log("searchParameters", searchParameters);
 
     const searchResults = await this.client.collections<ParsedTweetData>("tweets").documents().search(searchParameters);
 

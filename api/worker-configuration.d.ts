@@ -2,10 +2,13 @@
 
 interface CloudflareBindings {
   SCRAPE_REQUESTS_KV: KVNamespace;
+  XHANDLES_KV: KVNamespace;
   TYPESENSE_API_KEY: string;
   GROQ_API_KEY: string;
+  OPENAI_API_KEY: string;
   APIFY_API_KEY: string;
   PINECONE_API_KEY: string;
+  CLOUDFLARE_ACCOUNT_ID: string;
   XHANDLES: DurableObjectNamespace<XHandlesObject>;
   SCRAPE_REQUESTS: DurableObjectNamespace<ScrapeRequestsObject>;
   TWEETS_BUCKET: R2Bucket;

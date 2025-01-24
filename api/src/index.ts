@@ -1,19 +1,18 @@
 import { Hono } from "hono";
-import { Scraper } from "./classes/Apify";
+import { cors } from "hono/cors";
 import { LLM } from "./classes/LLM";
 import { PineconeClient, PineconeNamespace } from "./classes/Pinecone";
 import { R2TweetsStorage } from "./classes/TweetsStorage";
 import { TypesenseClient } from "./classes/Typesense";
-import { XHandle, XHandlesObject } from "./DurableObjects/XHandles";
-import { ScrapeRequestsObject } from "./DurableObjects/ScrapeRequests";
-import { getScrapeRequestDO, getXHandleDO } from "./helpers/utils";
+import { ScrapeRequestsObject, TweetsScraperBody } from "./DurableObjects/ScrapeRequests";
+import { XHandlesObject } from "./DurableObjects/XHandles";
+import { parseTweets } from "./helpers/parse";
 import { AiAnalyzeBody, aiAnalyze, aiAnalyzeInQueue } from "./helpers/services/aiAnalyzing";
-import { SavedTweet, saveTweets, saveToPinecone, saveToTypesense } from "./helpers/services/saving";
-import { TweetsScraperBody, tweetsScraper } from "./helpers/services/scraping";
-import { cors } from "hono/cors";
-import { parseTweets, parseUserInfo } from "./helpers/parse";
+import { SavedTweet, saveTweets } from "./helpers/services/saving";
+import { tweetsScraper } from "./helpers/services/scraping";
+import { getScrapeRequestDO, getXHandleDO } from "./helpers/utils";
 
-export { XHandlesObject, ScrapeRequestsObject };
+export { ScrapeRequestsObject, XHandlesObject };
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 app.use("*", cors());
@@ -36,7 +35,9 @@ export default {
       case "error-queue":
         for (const message of batch.messages) {
           const error = message.body as Error;
-          await env.ERROR_BUCKET.put(`errors/${Date.now()}.log`, JSON.stringify(error));
+          const now = Date.now();
+          console.error(now, "got app error", error);
+          await env.ERROR_BUCKET.put(`errors/${now}.log`, JSON.stringify(error));
         }
         break;
       case "tweets-scraper-queue":
@@ -44,7 +45,12 @@ export default {
         for (const data of scraperData) {
           const stub = getScrapeRequestDO(env, data.scrapeRequestId);
           await stub.startedScraping();
-          await tweetsScraper(data, env);
+          try {
+            await tweetsScraper(data, env);
+          } catch (err) {
+            console.error(err);
+            await stub.failedScraping(err instanceof Error ? err.message : "Unknown error");
+          }
         }
         break;
       case "ai-analyzer-queue":
@@ -53,7 +59,7 @@ export default {
           await aiAnalyzeInQueue(data, env);
           if (data.scrapeRequestId) {
             const stub = getScrapeRequestDO(env, data.scrapeRequestId);
-            await stub.doneAiAnalyzing(data.parsedTweetData.id);
+            await stub.doneAiAnalyzing(data.fullTweetData.id);
           }
         }
         break;
@@ -63,7 +69,7 @@ export default {
         const scrapeRequestIds = saveData.map((s) => s.scrapeRequestId).filter((id) => id !== undefined);
         for (const scrapeRequestId of scrapeRequestIds) {
           const stub = getScrapeRequestDO(env, scrapeRequestId);
-          await stub.doneSaving(saveData.filter((s) => s.scrapeRequestId === scrapeRequestId).map((s) => s.fullTweetData.id));
+          await stub.doneSaving(saveData.filter((s) => s.scrapeRequestId === scrapeRequestId).map((s) => s.parsedTweetData.id));
         }
         break;
       default:
@@ -78,15 +84,30 @@ app.get("/", (c) => {
 
 app.get("/ai", async (c) => {
   const llmResult = await new LLM(c.env).introduce("introduce yourself");
-  if (LLM.hasResponse(llmResult) && llmResult.response) {
-    return c.text(llmResult.response);
-  }
-  return c.text("No result");
+  console.log(llmResult);
+  // if (LLM.hasResponse(llmResult) && llmResult.response) {
+  //   return c.text(llmResult.response);
+  // }
+  return c.json({ result: llmResult });
 });
 
 app.get("/storage/tweets", async (c) => {
-  const tweets = await new R2TweetsStorage(c.env).listTweets();
+  const tweets = await new R2TweetsStorage(c.env).listTweetIds();
   return c.json(tweets);
+});
+
+app.get("/storage/errors", async (c) => {
+  const errors = await c.env.ERROR_BUCKET.list();
+  // sort by key
+  errors.objects.sort((a, b) => b.key.localeCompare(a.key));
+  const errorData = await Promise.all(
+    errors.objects.map(async (object) => {
+      const error = await c.env.ERROR_BUCKET.get(object.key);
+      const data = await error?.json();
+      return { name: object.key, data };
+    })
+  );
+  return c.json(errorData);
 });
 
 app.get("/storage/tweets/:id", async (c) => {
@@ -97,18 +118,22 @@ app.get("/storage/tweets/:id", async (c) => {
 
 app.post("/storage/re-save", async (c) => {
   const body = await c.req.json();
-  const { ids, run_ai_analyze = false } = body;
-  if (!ids) return c.json({ error: "ids are required" }, 400);
+  const { ids, run_ai_analyze = false, all = false } = body;
+  if (!ids && !all) return c.json({ error: "ids are required or all must be true" }, 400);
   const tweets: SavedTweet[] = [];
-  for (const id of ids) {
-    const tweet = await new R2TweetsStorage(c.env).getTweetDataByID(id);
-    if (!tweet) {
-      return c.json({ error: `Tweet ${id} not found` }, 404);
+  const allTweetIds = all ? await new R2TweetsStorage(c.env).listTweetIds() : ids;
+  console.log("re-saving", allTweetIds.length, "tweets");
+  for (const id of allTweetIds) {
+    console.log("re-saving tweet", id);
+    const tweet = ((await new R2TweetsStorage(c.env).getTweetDataByID(id)) ?? {}) as SavedTweet;
+    const fullTweetData = await new R2TweetsStorage(c.env).getRawFullTweetDataByID(id);
+    if (!fullTweetData) {
+      return c.json({ error: `Full tweet ${id} not found` }, 404);
     }
-    tweet.parsedTweetData = parseTweets([tweet.fullTweetData])[0];
+    const parsedTweetData = parseTweets([fullTweetData]);
+    tweet.parsedTweetData = parsedTweetData[0];
     if (run_ai_analyze) {
-      const userInfo = parseUserInfo([tweet.fullTweetData], tweet.parsedTweetData.user);
-      const { aiAnalyzedData } = await aiAnalyze({ parsedTweetData: tweet.parsedTweetData, userInfo }, c.env);
+      const { aiAnalyzedData } = await aiAnalyze({ fullTweetData }, c.env);
       tweet.aiAnalyzedData = aiAnalyzedData;
     }
     tweets.push({ ...tweet });
@@ -117,32 +142,50 @@ app.post("/storage/re-save", async (c) => {
   return c.json({ status: "success", run_ai_analyze, count: tweets.length, tweets });
 });
 
-app.post("/ai/tweet/:id", async (c) => {
-  const id = c.req.param("id");
-  const fullTweetData = await new R2TweetsStorage(c.env).getRawFullTweetDataByID(id);
-  if (!fullTweetData) {
-    return c.json({ error: `Tweet ${id} not found` }, 404);
-  }
-  const parsedTweetData = parseTweets([fullTweetData]);
-  const userInfo = parseUserInfo([fullTweetData], parsedTweetData[0].user);
-  const result = await aiAnalyze({ parsedTweetData: parsedTweetData[0], userInfo }, c.env);
-  return c.json(result);
-});
-
 // get all scrape requests from KV
 app.get("/scrape", async (c) => {
   const kv = c.env.SCRAPE_REQUESTS_KV;
   const list = await kv.list();
   const scrapeRequests = await Promise.all(
     list.keys.map(async (key) => {
-      const scrapeRequest = await kv.get(key.name);
+      console.log("Getting scrape request: " + key.name);
+      const requestData = await kv.get(key.name);
       return {
         scrapeRequestId: key.name,
-        scrapeRequest,
+        data: JSON.parse(requestData ?? "{}"),
       };
     })
   );
-  return c.json(scrapeRequests);
+  // sort based on scrapeRequestDate
+  scrapeRequests.sort((a, b) => (b.data?.scrapeRequestDate ?? 0) - (a.data?.scrapeRequestDate ?? 0));
+  // get only the first 10
+  const scrapeRequestData = await Promise.all(
+    scrapeRequests.slice(0, 10).map(async (s) => {
+      const scrapeRequest = getScrapeRequestDO(c.env, s.scrapeRequestId);
+      const data = await scrapeRequest.getData();
+      return { ...s, data };
+    })
+  );
+
+  return c.json(scrapeRequestData);
+});
+
+app.delete("/scrape", async (c) => {
+  const scrapeRequestId = c.req.query("scrapeRequestId");
+  if (scrapeRequestId) {
+    const scrapeRequestDO = await getScrapeRequestDO(c.env, scrapeRequestId);
+    if (!scrapeRequestDO) return c.json({ error: "Scrape request not found" }, 404);
+    await scrapeRequestDO.deleteSelf();
+    // await c.env.SCRAPE_REQUESTS_KV.delete(scrapeRequestId);
+  } else {
+    const scrapeRequests = await c.env.SCRAPE_REQUESTS_KV.list();
+    for (const scrapeRequest of scrapeRequests.keys) {
+      await c.env.SCRAPE_REQUESTS_KV.delete(scrapeRequest.name);
+      const scrapeRequestDO = getScrapeRequestDO(c.env, scrapeRequest.name);
+      await scrapeRequestDO.deleteSelf();
+    }
+  }
+  return c.json({ status: "success" });
 });
 
 app.get("/scrape/:scrapeRequestId", async (c) => {
@@ -159,15 +202,18 @@ app.get("/scrape/:scrapeRequestId", async (c) => {
 
 app.post("/scrape/:userId", async (c) => {
   const userId = c.req.param("userId");
+  const body = await c.req.json();
+  const { config = {} } = body;
+  const { maxItems = 10, until = undefined } = config;
 
   const id = await c.env.SCRAPE_REQUESTS.newUniqueId();
-  const stub = c.env.SCRAPE_REQUESTS.get(id);
   const scrapeRequestId = id.toString();
+  const stub = getScrapeRequestDO(c.env, scrapeRequestId);
 
   const scrapeRequest: TweetsScraperBody = {
     scrapeRequestId,
     scrapeRequest: "user",
-    config: { userId },
+    config: { userId, maxItems, until },
   };
 
   await stub.startNewScrape(scrapeRequest);
@@ -212,6 +258,12 @@ app.post("/scrape/:userId", async (c) => {
 // });
 
 app.delete("/search", async (c) => {
+  const kv = c.env.XHANDLES_KV;
+  const list = await kv.list();
+  for (const key of list.keys) {
+    const xHandleDO = getXHandleDO(c.env, key.name);
+    await xHandleDO.deleteTweets();
+  }
   await new R2TweetsStorage(c.env).deleteAll();
   await new TypesenseClient(c.env).deleteAll();
   await new PineconeClient(c.env).deleteAll();
@@ -229,14 +281,26 @@ app.get("/search", async (c) => {
   return c.json(results);
 });
 
-app.get("/query/:query", async (c) => {
-  const query = c.req.param("query");
-  const results = await new PineconeClient(c.env).query(query, PineconeNamespace.TWEETS);
-  return c.json(results);
+app.get("/user", async (c) => {
+  const kv = c.env.XHANDLES_KV;
+  const list = await kv.list();
+  const users = await Promise.all(
+    list.keys.map(async (key) => {
+      const xHandleDO = getXHandleDO(c.env, key.name);
+      const user = await xHandleDO.getUser();
+      return { handle: key.name, data: user };
+    })
+  );
+  return c.json(users);
 });
 
 app.get("/user/:handle", async (c) => {
   const handle = c.req.param("handle");
+  const kv = c.env.XHANDLES_KV;
+  const userKV = await kv.get(handle);
+  if (!userKV) {
+    return c.json({ error: "User not found" }, 404);
+  }
   const xHandleDO = getXHandleDO(c.env, handle);
   const user = await xHandleDO.getUser();
   return c.json(user);
@@ -253,6 +317,40 @@ app.get("/user/:handle/tweets", async (c) => {
   const xHandleDO = getXHandleDO(c.env, handle);
   const user = await xHandleDO.getTweets();
   return c.json(user);
+});
+
+app.post("/ai/tweet/:id", async (c) => {
+  const id = c.req.param("id");
+  const fullTweetData = await new R2TweetsStorage(c.env).getRawFullTweetDataByID(id);
+  if (!fullTweetData) {
+    return c.json({ error: `Tweet ${id} not found` }, 404);
+  }
+  const result = await aiAnalyze({ fullTweetData }, c.env);
+  return c.json(result);
+});
+
+app.post("/ai/query/context", async (c) => {
+  const body = await c.req.json();
+  const { prompt, options } = body;
+  if (!prompt) return c.json({ error: "Prompt is required" }, 400);
+  const results = await new PineconeClient(c.env).query(prompt, PineconeNamespace.TWEETS, options);
+  return c.json({ results });
+});
+
+app.post("/ai/query", async (c) => {
+  const body = await c.req.json();
+  const { prompt, options } = body;
+  if (!prompt) return c.json({ error: "Prompt is required" }, 400);
+  const results = await new PineconeClient(c.env).query(prompt, PineconeNamespace.TWEETS, { ...(options ?? {}), includeMetadata: true });
+
+  const stream = await new LLM(c.env).streamAnswerQuestion(prompt, results.map((hit) => hit.text).join("\n"));
+
+  return stream.toDataStreamResponse({
+    headers: {
+      "Content-Type": "text/event-stream",
+    },
+  });
+  // return c.json({ response: aiAnswer, context: results });
 });
 
 // convert this to a stream

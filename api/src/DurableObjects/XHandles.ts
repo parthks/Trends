@@ -2,14 +2,15 @@ import { DurableObject } from "cloudflare:workers";
 import { ParsedTweetData, XUserInfo } from "../helpers/types";
 
 type XHandleMetadata = {
-  lastScrapedAt: number;
-  oldestTweetAt: number;
-  latestTweetAt: number;
+  lastScrapedAt?: number;
 };
 
 export interface XHandle extends XUserInfo {
   metadata: XHandleMetadata & {
     lastUpdatedAt: number;
+    tweetCount?: number;
+    oldestTweetAt?: number;
+    latestTweetAt?: number;
   };
 }
 
@@ -54,16 +55,6 @@ export class XHandlesObject extends DurableObject {
   }
 
   async upsertNewTweets(tweets: ParsedTweetData[], userInfo: XUserInfo) {
-    await this.sql.exec(`DROP TABLE IF EXISTS tweets`);
-    await this.sql.exec(`CREATE TABLE IF NOT EXISTS tweets(
-      tweet_id    TEXT PRIMARY KEY,
-      tweet_date  TEXT,
-      is_retweet  INTEGER,
-      is_quote  INTEGER,
-      is_original  INTEGER,
-      tweet_conversation_id  TEXT DEFAULT NULL,
-      scraped_at  INTEGER
-    )`);
     const scrapedAt = Date.now();
     for (const tweet of tweets) {
       const values = [
@@ -83,18 +74,32 @@ export class XHandlesObject extends DurableObject {
       );
     }
 
-    const oldestTweetAt = tweets.reduce((min, tweet) => Math.min(min, tweet.created_at), Infinity);
-    const latestTweetAt = tweets.reduce((max, tweet) => Math.max(max, tweet.created_at), -Infinity);
-
     this.upsertUser(userInfo, {
       lastScrapedAt: scrapedAt,
-      oldestTweetAt,
-      latestTweetAt,
     });
   }
 
   async getUser(): Promise<XHandle | null> {
-    return this.userData || null;
+    if (!this.userData) {
+      return null;
+    }
+    const cursor = await this.sql.exec(`SELECT COUNT(*) FROM tweets`).one();
+    const count = Object.values(cursor ?? {})[0] as number;
+
+    const oldestTweetAtCursor = await this.sql.exec(`SELECT MIN(tweet_date) FROM tweets`).one();
+    const latestTweetAtCursor = await this.sql.exec(`SELECT MAX(tweet_date) FROM tweets`).one();
+    const oldestTweetAt = Object.values(oldestTweetAtCursor ?? {})[0] as string;
+    const latestTweetAt = Object.values(latestTweetAtCursor ?? {})[0] as string;
+
+    return {
+      ...this.userData,
+      metadata: {
+        ...this.userData.metadata,
+        tweetCount: count,
+        oldestTweetAt: oldestTweetAt ? parseInt(oldestTweetAt) : undefined,
+        latestTweetAt: latestTweetAt ? parseInt(latestTweetAt) : undefined,
+      },
+    };
   }
 
   async getTweets() {
@@ -102,22 +107,15 @@ export class XHandlesObject extends DurableObject {
     return cursor.toArray();
   }
 
+  async deleteTweets() {
+    await this.sql.exec(`DELETE FROM tweets`);
+  }
+
   async upsertUser(userInfo: XUserInfo, metadata: XHandleMetadata) {
-    const userMetadata = this.userData?.metadata ?? metadata;
-
-    if (userMetadata?.oldestTweetAt && metadata.oldestTweetAt < userMetadata.oldestTweetAt) {
-      userMetadata.oldestTweetAt = metadata.oldestTweetAt;
-    }
-
-    if (userMetadata?.latestTweetAt && metadata.latestTweetAt > userMetadata.latestTweetAt) {
-      userMetadata.latestTweetAt = metadata.latestTweetAt;
-    }
-
     this.userData = {
       ...this.userData,
       ...userInfo,
       metadata: {
-        ...userMetadata,
         lastScrapedAt: metadata.lastScrapedAt,
         lastUpdatedAt: Date.now(),
       },

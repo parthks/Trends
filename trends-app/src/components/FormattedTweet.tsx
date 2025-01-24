@@ -61,6 +61,12 @@ function FormattedTweetText({ text, media }: { text: string | undefined; media: 
     }
   });
 
+  // format all links in text to be clickable
+  formattedText = formattedText?.replace(
+    /(https?:\/\/[^\s]+)/g,
+    '<a style="color: #3b82f6; text-decoration: underline;" href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+
   return (
     <span
       dangerouslySetInnerHTML={{

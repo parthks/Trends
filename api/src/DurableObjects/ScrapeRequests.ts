@@ -1,9 +1,22 @@
 import { DurableObject } from "cloudflare:workers";
 import { FullTweetData, ParsedTweetData, XUserInfo } from "../helpers/types";
 import { AiAnalyzeBody } from "../helpers/services/aiAnalyzing";
-import { TweetsScraperBody } from "../helpers/services/scraping";
 import { SavedTweet } from "../helpers/services/saving";
-import { removeDuplicates } from "../helpers/utils";
+import { getXHandleDO, removeDuplicates } from "../helpers/utils";
+
+export type UserScraperConfig = {
+  userId: string;
+  until?: number;
+  maxItems?: number;
+};
+type tweetScraperConfig = {
+  tweetId: string;
+};
+export type TweetsScraperBody = {
+  scrapeRequestId: string;
+  scrapeRequest: "user";
+  config: UserScraperConfig | tweetScraperConfig;
+};
 
 enum ScrapeRequestStatus {
   PENDING = "pending",
@@ -11,6 +24,7 @@ enum ScrapeRequestStatus {
   AI_ANALYZING = "ai_analyzing",
   SAVING = "saving",
   COMPLETED = "completed",
+  FAILED = "failed",
 }
 
 type ScrapeData = {
@@ -43,13 +57,15 @@ export class ScrapeRequestsObject extends DurableObject {
   AI_ANALYZER_QUEUE: Queue;
   SCRAPE_REQUESTS_KV: KVNamespace;
 
+  env: CloudflareBindings;
+
   constructor(ctx: DurableObjectState, env: CloudflareBindings) {
     super(ctx, env);
     this.TWEETS_SCRAPER_QUEUE = env.TWEETS_SCRAPER_QUEUE;
     this.AI_ANALYZER_QUEUE = env.AI_ANALYZER_QUEUE;
 
     this.SCRAPE_REQUESTS_KV = env.SCRAPE_REQUESTS_KV;
-
+    this.env = env;
     // `blockConcurrencyWhile()` ensures no requests are delivered until
     // initialization completes.
     ctx.blockConcurrencyWhile(async () => {
@@ -75,14 +91,19 @@ export class ScrapeRequestsObject extends DurableObject {
     await this.saveData();
   }
 
-  async doneScraping(parsedTweetData: ParsedTweetData[], userInfo: XUserInfo) {
-    this.scrapeState.scrapedTweetIds = parsedTweetData.map((parsedTweet) => parsedTweet.id);
+  async failedScraping(error: string) {
+    this.scrapeState.scrapeRequestStatus = ScrapeRequestStatus.FAILED;
+    this.scrapeState.scrapeRequestError = error;
+    await this.saveData();
+  }
 
-    for (const tweetData of parsedTweetData) {
+  async doneScraping(fullTweetData: FullTweetData[]) {
+    this.scrapeState.scrapedTweetIds = fullTweetData.map((fullTweet) => fullTweet.id);
+
+    for (const tweetData of fullTweetData) {
       const body: AiAnalyzeBody = {
         scrapeRequestId: this.scrapeState.scrapeRequestId,
-        parsedTweetData: tweetData,
-        userInfo,
+        fullTweetData: tweetData,
       };
       this.scrapeState.scrapedTweetIds = removeDuplicates([...(this.scrapeState.scrapedTweetIds || []), tweetData.id]);
       await this.AI_ANALYZER_QUEUE.send(body);
@@ -118,6 +139,19 @@ export class ScrapeRequestsObject extends DurableObject {
 
   async startNewScrape(scrapeRequest: TweetsScraperBody) {
     const { scrapeRequestId, ...scrapeConfigData } = scrapeRequest;
+    if (scrapeConfigData.scrapeRequest == "user") {
+      const config = scrapeConfigData.config as UserScraperConfig;
+      // if until is not set, get it from the oldest tweet in the database
+      if (!config.until) {
+        const handlerDO = getXHandleDO(this.env, config.userId);
+        const user = await handlerDO.getUser();
+        if (!user) {
+          config.until = Date.now();
+        } else {
+          config.until = user.metadata?.oldestTweetAt;
+        }
+      }
+    }
     this.scrapeState = {
       scrapeRequestId: scrapeRequest.scrapeRequestId,
       scrapeRequestDate: Date.now(),
@@ -127,5 +161,12 @@ export class ScrapeRequestsObject extends DurableObject {
     await this.SCRAPE_REQUESTS_KV.put(this.scrapeState.scrapeRequestId, JSON.stringify({ scrapeRequestDate: this.scrapeState.scrapeRequestDate }));
     await this.TWEETS_SCRAPER_QUEUE.send(scrapeRequest);
     await this.saveData();
+  }
+
+  async deleteSelf() {
+    const id = this.scrapeState?.scrapeRequestId;
+    await this.ctx.storage.deleteAll();
+    if (!id) return;
+    await this.SCRAPE_REQUESTS_KV.delete(id);
   }
 }

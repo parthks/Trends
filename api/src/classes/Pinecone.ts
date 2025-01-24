@@ -1,4 +1,4 @@
-import { Index, Pinecone } from "@pinecone-database/pinecone";
+import { Index, Pinecone, QueryOptions } from "@pinecone-database/pinecone";
 import { TypesenseTweetData } from "../helpers/types";
 import { SavedTweet } from "../helpers/services/saving";
 
@@ -12,16 +12,23 @@ type PineconeRecordMetadata = {
   keyHighlight?: string;
 };
 
-export type InputPineconeRecordMetadata = Omit<TypesenseTweetData, "media" | "quote_media"> & {
+type CustomQueryOptions = {
+  topK?: number;
+  includeMetadata?: boolean;
+  includeValues?: boolean;
+} & Omit<QueryOptions, "topK" | "includeMetadata" | "includeValues">;
+
+export type InputPineconeRecordMetadata = Omit<TypesenseTweetData, "media" | "quote_media" | "thread"> & {
   media: string;
   quote_media: string;
+  thread: string;
 };
 
 export type QueryTweetsOutput = {
   tweet_id: string;
   score: number | undefined;
-  text: string;
-  metadata: TypesenseTweetData;
+  text: string | undefined; // when not using metadata, only need tweet ids
+  metadata: TypesenseTweetData | undefined; // when not using metadata, only need tweet ids
 };
 
 type InputPineconeTweetData = {
@@ -90,7 +97,7 @@ export class PineconeClient {
     await this.index.namespace(namespace).upsert(records);
   }
 
-  async query(query: string, namespace: PineconeNamespace): Promise<QueryTweetsOutput[]> {
+  async query(query: string, namespace: PineconeNamespace, options?: CustomQueryOptions): Promise<QueryTweetsOutput[]> {
     // Convert the query into a numerical vector that Pinecone can search with
     const queryEmbedding = await this.client.inference.embed(this.model, [query], { inputType: "query" });
 
@@ -98,17 +105,24 @@ export class PineconeClient {
       throw new Error("Failed to embed query");
     }
 
-    const results = await this.index.namespace(namespace).query({
-      vector: queryEmbedding[0].values,
+    const defaultOptions = {
       topK: 10,
       includeMetadata: true,
       includeValues: false,
+    };
+
+    const results = await this.index.namespace(namespace).query({
+      ...defaultOptions,
+      ...(options ?? {}),
+      vector: queryEmbedding[0].values,
     });
+
+    console.log("results", results);
 
     return results.matches.map((m) => ({
       tweet_id: m.id,
       score: m.score,
-      text: m.metadata!.text!,
+      text: m.metadata?.text,
       metadata: this.deserializeFromPineconeMetadata(m.metadata as InputPineconeRecordMetadata),
     }));
   }
@@ -116,22 +130,27 @@ export class PineconeClient {
   serializeToPineconeMetadata = (tweet: SavedTweet): InputPineconeRecordMetadata => {
     const media = JSON.stringify(tweet.parsedTweetData.media);
     const quote_media = JSON.stringify(tweet.parsedTweetData.quote_media);
+    const thread = JSON.stringify(tweet.parsedTweetData.thread);
     return {
       ...tweet.parsedTweetData,
       ...tweet.aiAnalyzedData,
       scrapeRequestId: tweet.scrapeRequestId,
       media,
       quote_media,
+      thread,
     };
   };
 
-  deserializeFromPineconeMetadata = (metadata: InputPineconeRecordMetadata): TypesenseTweetData => {
+  deserializeFromPineconeMetadata = (metadata: InputPineconeRecordMetadata | undefined): TypesenseTweetData | undefined => {
+    if (!metadata) return undefined;
     const media = JSON.parse(metadata.media || "[]");
     const quote_media = JSON.parse(metadata.quote_media || "[]");
+    const thread = JSON.parse(metadata.thread || "[]");
     return {
       ...metadata,
       media,
       quote_media,
+      thread,
     };
   };
 

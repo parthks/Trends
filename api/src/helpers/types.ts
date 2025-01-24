@@ -17,10 +17,16 @@ export interface FullTweetData {
   likeCount: number;
   conversationId: string;
   fullText: string;
+  text: string;
   createdAt: string;
   retweet?: FullTweetData;
   quote?: FullTweetData;
-  text?: string;
+  inReplyToId?: string;
+  inReplyToUserId?: string;
+  inReplyToUsername?: string;
+  isRetweet: boolean;
+  isQuote: boolean;
+  isReply: boolean;
 }
 
 interface UrlEntity {
@@ -46,18 +52,25 @@ export interface ParsedTweetData {
   id: string;
   media: Media[];
   like_count: number;
-  user: string;
-  conversation_id?: string;
-  retweet?: string;
-  original_tweet_id?: string;
-  retweet_user?: string;
-  text?: string;
+  user_id: string;
+  user_name: string;
+  conversation_id: string;
   created_at: number;
+  is_reply: boolean;
+  is_quote: boolean;
+  sourced_from_retweet: boolean;
+  text?: string;
+  sourced_from_retweet_by_user_id?: string;
+  sourced_from_retweet_by_user_name?: string;
+  sourced_from_retweet_by_tweet_id?: string;
   quote?: string;
   quote_media?: Media[];
-  quote_id?: string;
-  quote_user?: string;
-  thread?: ParsedTweetData[];
+  quote_tweet_id?: string;
+  quote_user_id?: string;
+  quote_user_name?: string;
+  reply_to_tweet_id?: string;
+  reply_to_user_id?: string;
+  reply_to_user_name?: string;
 }
 
 export type TypesenseTweetData = ParsedTweetData &
