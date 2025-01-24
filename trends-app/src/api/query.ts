@@ -1,6 +1,6 @@
 import { API_URL } from "./index";
 
-export const queryAPI = async (input: RequestInfo | URL, init?: RequestInit) => {
+export const queryAPI = async (_: RequestInfo | URL, init?: RequestInit) => {
   const response = fetch(`${API_URL}/ai/query`, {
     method: "POST",
     headers: {
