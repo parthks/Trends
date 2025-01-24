@@ -5,14 +5,14 @@ import { PineconeClient, PineconeNamespace } from "./classes/Pinecone";
 import { R2TweetsStorage } from "./classes/TweetsStorage";
 import { TypesenseClient } from "./classes/Typesense";
 import { ScrapeRequestsObject, TweetsScraperBody } from "./DurableObjects/ScrapeRequests";
-import { XHandlesObject } from "./DurableObjects/XHandles";
+// import { XHandlesObject } from "./DurableObjects/XHandles";
 import { parseTweets } from "./helpers/parse";
 import { AiAnalyzeBody, aiAnalyze, aiAnalyzeInQueue } from "./helpers/services/aiAnalyzing";
 import { SavedTweet, saveTweets } from "./helpers/services/saving";
 import { tweetsScraper } from "./helpers/services/scraping";
-import { getScrapeRequestDO, getXHandleDO } from "./helpers/utils";
+import { getScrapeRequestDO } from "./helpers/utils";
 
-export { ScrapeRequestsObject, XHandlesObject };
+export { ScrapeRequestsObject };
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 app.use("*", cors());
@@ -96,6 +96,13 @@ app.get("/storage/tweets", async (c) => {
   return c.json(tweets);
 });
 
+app.delete("/storage/full-tweets", async (c) => {
+  const ids = (await c.req.json()).ids as string[];
+  if (!ids) return c.json({ error: "ids are required" }, 400);
+  await new R2TweetsStorage(c.env).deleteRawFullTweetDataByIds(ids);
+  return c.json({ status: "success" });
+});
+
 app.get("/storage/errors", async (c) => {
   const errors = await c.env.ERROR_BUCKET.list();
   // sort by key
@@ -113,7 +120,8 @@ app.get("/storage/errors", async (c) => {
 app.get("/storage/tweets/:id", async (c) => {
   const id = c.req.param("id");
   const tweet = await new R2TweetsStorage(c.env).getTweetByID(id);
-  return c.json(tweet);
+  const fullTweetData = await new R2TweetsStorage(c.env).getRawFullTweetDataByID(id);
+  return c.json({ tweet, fullTweetData });
 });
 
 app.post("/storage/re-save", async (c) => {
@@ -121,7 +129,7 @@ app.post("/storage/re-save", async (c) => {
   const { ids, run_ai_analyze = false, all = false } = body;
   if (!ids && !all) return c.json({ error: "ids are required or all must be true" }, 400);
   const tweets: SavedTweet[] = [];
-  const allTweetIds = all ? await new R2TweetsStorage(c.env).listTweetIds() : ids;
+  const allTweetIds = all ? await new R2TweetsStorage(c.env).listRawTweetIds() : ids;
   console.log("re-saving", allTweetIds.length, "tweets");
   for (const id of allTweetIds) {
     console.log("re-saving tweet", id);
@@ -138,6 +146,11 @@ app.post("/storage/re-save", async (c) => {
     }
     tweets.push({ ...tweet });
   }
+
+  if (tweets.length === 0) {
+    return c.json({ status: "yo, no tweets!!!", run_ai_analyze, count: tweets.length });
+  }
+
   await saveTweets(tweets, c.env);
   return c.json({ status: "success", run_ai_analyze, count: tweets.length, tweets });
 });
@@ -258,12 +271,12 @@ app.post("/scrape/:userId", async (c) => {
 // });
 
 app.delete("/search", async (c) => {
-  const kv = c.env.XHANDLES_KV;
-  const list = await kv.list();
-  for (const key of list.keys) {
-    const xHandleDO = getXHandleDO(c.env, key.name);
-    await xHandleDO.deleteTweets();
-  }
+  // const kv = c.env.XHANDLES_KV;
+  // const list = await kv.list();
+  // for (const key of list.keys) {
+  //   const xHandleDO = getXHandleDO(c.env, key.name);
+  //   await xHandleDO.deleteTweets();
+  // }
   await new R2TweetsStorage(c.env).deleteAll();
   await new TypesenseClient(c.env).deleteAll();
   await new PineconeClient(c.env).deleteAll();
@@ -284,40 +297,42 @@ app.get("/search", async (c) => {
 app.get("/user", async (c) => {
   const kv = c.env.XHANDLES_KV;
   const list = await kv.list();
-  const users = await Promise.all(
-    list.keys.map(async (key) => {
-      const xHandleDO = getXHandleDO(c.env, key.name);
-      const user = await xHandleDO.getUser();
-      return { handle: key.name, data: user };
-    })
-  );
-  return c.json(users);
+  // const users = await Promise.all(
+  //   list.keys.map(async (key) => {
+  //     const xHandleDO = getXHandleDO(c.env, key.name);
+  //     const user = await xHandleDO.getUser();
+  //     return { handle: key.name, data: user };
+  //   })
+  // );
+  return c.json(list);
 });
 
 app.get("/user/:handle", async (c) => {
   const handle = c.req.param("handle");
   const kv = c.env.XHANDLES_KV;
-  const userKV = await kv.get(handle);
-  if (!userKV) {
+  const user = await kv.get(handle);
+  if (!user) {
     return c.json({ error: "User not found" }, 404);
   }
-  const xHandleDO = getXHandleDO(c.env, handle);
-  const user = await xHandleDO.getUser();
+  // const xHandleDO = getXHandleDO(c.env, handle);
+  // const user = await xHandleDO.getUser();
   return c.json(user);
 });
 
 app.delete("/user/:handle", async (c) => {
   const handle = c.req.param("handle");
-  const xHandleDO = getXHandleDO(c.env, handle);
-  await xHandleDO.deleteSelf();
+  const kv = c.env.XHANDLES_KV;
+  await kv.put(handle, "{}");
+  // const xHandleDO = getXHandleDO(c.env, handle);
+  // await xHandleDO.deleteSelf();
 });
 
-app.get("/user/:handle/tweets", async (c) => {
-  const handle = c.req.param("handle");
-  const xHandleDO = getXHandleDO(c.env, handle);
-  const user = await xHandleDO.getTweets();
-  return c.json(user);
-});
+// app.get("/user/:handle/tweets", async (c) => {
+//   const handle = c.req.param("handle");
+//   const xHandleDO = getXHandleDO(c.env, handle);
+//   const user = await xHandleDO.getTweets();
+//   return c.json(user);
+// });
 
 app.post("/ai/tweet/:id", async (c) => {
   const id = c.req.param("id");

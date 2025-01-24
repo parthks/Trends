@@ -1,3 +1,5 @@
+// these types are duplicated in the frontend in trends-app
+
 export type TrendTopic = string;
 
 export interface AiAnalyzedData {
@@ -54,15 +56,15 @@ export interface ParsedTweetData {
   like_count: number;
   user_id: string;
   user_name: string;
-  conversation_id: string;
+  conversation_id?: string; // not there for tweets sourced from retweets
   created_at: number;
   is_reply: boolean;
   is_quote: boolean;
-  sourced_from_retweet: boolean;
+  // is_sourced_from_retweet: boolean;
   text?: string;
-  sourced_from_retweet_by_user_id?: string;
-  sourced_from_retweet_by_user_name?: string;
-  sourced_from_retweet_by_tweet_id?: string;
+  // sourced_from_retweet_by_user_id?: string;
+  // sourced_from_retweet_by_user_name?: string;
+  // sourced_from_retweet_by_tweet_id?: string;
   quote?: string;
   quote_media?: Media[];
   quote_tweet_id?: string;
@@ -106,7 +108,7 @@ export interface XUserInfo {
   createdAt: string;
   entities: {
     description: {
-      urls: any[];
+      urls: UrlEntity[];
     };
     url: {
       urls: {

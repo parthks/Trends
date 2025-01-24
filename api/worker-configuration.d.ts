@@ -9,7 +9,7 @@ interface CloudflareBindings {
   APIFY_API_KEY: string;
   PINECONE_API_KEY: string;
   CLOUDFLARE_ACCOUNT_ID: string;
-  XHANDLES: DurableObjectNamespace<XHandlesObject>;
+  // XHANDLES: DurableObjectNamespace<XHandlesObject>;
   SCRAPE_REQUESTS: DurableObjectNamespace<ScrapeRequestsObject>;
   TWEETS_BUCKET: R2Bucket;
   ERROR_BUCKET: R2Bucket;

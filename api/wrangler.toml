@@ -23,9 +23,9 @@ id = "b07c22338c7545c2a909011a63079d54"
 # Bind a Durable Object. Durable objects are a scale-to-zero compute primitive based on the actor model.
 # Durable Objects can live for as long as needed. Use these when you need a long-running "server", such as in realtime apps.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#durable-objects
-[[durable_objects.bindings]]
-name = "XHANDLES"
-class_name = "XHandlesObject"
+# [[durable_objects.bindings]]
+# name = "XHANDLES"
+# class_name = "XHandlesObject"
 
 [[durable_objects.bindings]]
 name = "SCRAPE_REQUESTS"

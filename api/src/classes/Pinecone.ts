@@ -18,10 +18,9 @@ type CustomQueryOptions = {
   includeValues?: boolean;
 } & Omit<QueryOptions, "topK" | "includeMetadata" | "includeValues">;
 
-export type InputPineconeRecordMetadata = Omit<TypesenseTweetData, "media" | "quote_media" | "thread"> & {
+export type InputPineconeRecordMetadata = Omit<TypesenseTweetData, "media" | "quote_media"> & {
   media: string;
   quote_media: string;
-  thread: string;
 };
 
 export type QueryTweetsOutput = {
@@ -130,14 +129,12 @@ export class PineconeClient {
   serializeToPineconeMetadata = (tweet: SavedTweet): InputPineconeRecordMetadata => {
     const media = JSON.stringify(tweet.parsedTweetData.media);
     const quote_media = JSON.stringify(tweet.parsedTweetData.quote_media);
-    const thread = JSON.stringify(tweet.parsedTweetData.thread);
     return {
       ...tweet.parsedTweetData,
       ...tweet.aiAnalyzedData,
       scrapeRequestId: tweet.scrapeRequestId,
       media,
       quote_media,
-      thread,
     };
   };
 
@@ -145,12 +142,10 @@ export class PineconeClient {
     if (!metadata) return undefined;
     const media = JSON.parse(metadata.media || "[]");
     const quote_media = JSON.parse(metadata.quote_media || "[]");
-    const thread = JSON.parse(metadata.thread || "[]");
     return {
       ...metadata,
       media,
       quote_media,
-      thread,
     };
   };
 

@@ -45,7 +45,7 @@ export default function Search() {
     setQuery(query);
   };
 
-  console.log(users, topics, entities);
+  console.log({ users, topics, entities, results });
 
   return (
     <div className="p-4">
@@ -90,7 +90,10 @@ export default function Search() {
       <div className="flex flex-col gap-4">
         {results.map((result) => (
           <div key={result.id} className="flex flex-col gap-1 border rounded p-4">
-            <p className="text-sm text-gray-500">Tweeted on {format(new Date(result.created_at), "dd MMM yyyy")}</p>
+            <div className="flex justify-between gap-1">
+              <p className="text-sm text-gray-500">Tweeted on {format(new Date(result.created_at), "dd MMM yyyy")}</p>
+              <p className="text-sm text-gray-500">{result.is_reply ? "Reply" : result.is_quote ? "Quoted" : "Original"}</p>
+            </div>
             <p className="text-sm text-gray-500">Key Insight: {result.keyHighlight}</p>
             <FormattedTweet tweet={result} />
           </div>

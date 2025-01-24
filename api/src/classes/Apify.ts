@@ -30,7 +30,7 @@ export class Scraper {
     // Prepare Actor input
     const until = metadata.until ? new Date(metadata.until).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
     const input = {
-      searchTerms: ["from:" + userHandle + " until:" + until], // + " -filter:replies"],
+      searchTerms: ["from:" + userHandle + " until:" + until + " include:nativeretweets"], // + " -filter:replies"],
       maxItems: metadata.maxItems ?? 10,
       sort: "Latest",
     };

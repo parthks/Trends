@@ -10,14 +10,14 @@ export default function FormattedTweet({ tweet }: { tweet: TypesenseTweetData })
     ...(tweet.quote_media?.filter((media) => media.type === "video").map((media) => media.url) || []),
   ];
   return (
-    <div key={tweet.id} className="flex gap-4 w-full">
+    <div key={tweet.id} className="flex gap-4 w-full break-words">
       <div className="flex-1 min-w-0">
         <p>
-          <span className="font-bold">{tweet.user}</span>: <FormattedTweetText text={tweet.text} media={tweet.media} />
+          <span className="font-bold">{tweet.user_name}</span>: <FormattedTweetText text={tweet.text} media={tweet.media} />
         </p>
         {tweet.quote && (
           <p>
-            <span className="font-bold">{tweet.quote_user}</span>: <FormattedTweetText text={tweet.quote} media={tweet.quote_media} />
+            <span className="font-bold">{tweet.quote_user_name}</span>: <FormattedTweetText text={tweet.quote} media={tweet.quote_media} />
           </p>
         )}
       </div>

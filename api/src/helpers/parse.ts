@@ -1,4 +1,4 @@
-import { FullTweetData, Media, ParsedTweetData, XUserInfo } from "./types";
+import { FullTweetData, Media, ParsedTweetData } from "./types";
 
 const expandUrls = (tweet: FullTweetData, text: string): string => {
   const urls: Record<string, string> = {};
@@ -58,7 +58,9 @@ export const parseTweets = (data: FullTweetData[]): ParsedTweetData[] => {
     return false;
   });
 
-  const tweets: ParsedTweetData[] = uniqueTweets.map((tweet) => {
+  const removedRetweets = uniqueTweets.filter((tweet) => !tweet.isRetweet);
+
+  const tweets: ParsedTweetData[] = removedRetweets.map((tweet) => {
     const tweetData: ParsedTweetData = {
       id: tweet.id,
       media: getMedia(tweet),
@@ -69,41 +71,40 @@ export const parseTweets = (data: FullTweetData[]): ParsedTweetData[] => {
       conversation_id: tweet.conversationId,
       is_reply: !!tweet.isReply,
       is_quote: !!tweet.isQuote,
-      sourced_from_retweet: !!tweet.isRetweet,
+      // is_sourced_from_retweet: !!tweet.isRetweet,
     };
 
-    if (tweet.isRetweet && tweet.retweet) {
-      // if its a retweet, we are going to store the original tweet.
-      tweetData.sourced_from_retweet_by_tweet_id = tweet.id;
-      tweetData.sourced_from_retweet_by_user_id = tweet.retweet.author.id;
-      tweetData.sourced_from_retweet_by_user_name = tweet.retweet.author.userName;
-      tweetData.id = tweet.retweet.id;
-      tweetData.media = getMedia(tweet.retweet);
-      tweetData.like_count = tweet.retweet.likeCount;
-      tweetData.user_id = tweet.retweet.author.id;
-      tweetData.user_name = tweet.retweet.author.userName;
-      // should'nt a retweet have to definitely have text...
-      if (tweet.retweet.text) tweetData.text = expandUrls(tweet.retweet, tweet.retweet.text);
-      tweetData.created_at = new Date(tweet.retweet.createdAt).getTime();
-      tweetData.conversation_id = tweet.retweet.conversationId;
-      tweetData.is_reply = false;
-      tweetData.is_quote = false;
-    } else {
-      if (tweet.isReply && tweet.inReplyToId) {
-        tweetData.reply_to_tweet_id = tweet.inReplyToId;
-        tweetData.reply_to_user_id = tweet.inReplyToUserId;
-        tweetData.reply_to_user_name = tweet.inReplyToUsername;
-      } else {
-        tweetData.text = expandUrls(tweet, tweet.text ?? "");
-      }
+    // if (tweet.isRetweet && tweet.retweet) {
+    //   // if its a retweet, we are going to store the original tweet.
+    //   tweetData.sourced_from_retweet_by_tweet_id = tweet.id;
+    //   tweetData.sourced_from_retweet_by_user_id = tweet.retweet.author.id;
+    //   tweetData.sourced_from_retweet_by_user_name = tweet.retweet.author.userName;
+    //   tweetData.id = tweet.retweet.id;
+    //   tweetData.media = getMedia(tweet.retweet);
+    //   tweetData.like_count = tweet.retweet.likeCount;
+    //   tweetData.user_id = tweet.retweet.author.id;
+    //   tweetData.user_name = tweet.retweet.author.userName;
+    //   // should'nt a retweet have to definitely have text...
+    //   if (tweet.retweet.text) tweetData.text = expandUrls(tweet.retweet, tweet.retweet.text);
+    //   tweetData.created_at = new Date(tweet.retweet.createdAt).getTime();
+    //   // tweetData.conversation_id = tweet.retweet.conversationId; // not there for tweets sourced from retweets
+    //   tweetData.is_reply = false;
+    //   tweetData.is_quote = false;
+    // } else {
+    if (tweet.isReply && tweet.inReplyToId) {
+      tweetData.reply_to_tweet_id = tweet.inReplyToId;
+      tweetData.reply_to_user_id = tweet.inReplyToUserId;
+      tweetData.reply_to_user_name = tweet.inReplyToUsername;
+    }
+    tweetData.text = expandUrls(tweet, tweet.text ?? "");
 
-      if (tweet.isQuote && tweet.quote) {
-        tweetData.quote = expandUrls(tweet.quote, tweet.quote.text!);
-        tweetData.quote_media = getMedia(tweet.quote);
-        tweetData.quote_tweet_id = tweet.quote.id;
-        tweetData.quote_user_id = tweet.quote.author.id;
-        tweetData.quote_user_name = tweet.quote.author.userName;
-      }
+    if (tweet.isQuote && tweet.quote) {
+      tweetData.quote = expandUrls(tweet.quote, tweet.quote.text!);
+      tweetData.quote_media = getMedia(tweet.quote);
+      tweetData.quote_tweet_id = tweet.quote.id;
+      tweetData.quote_user_id = tweet.quote.author.id;
+      tweetData.quote_user_name = tweet.quote.author.userName;
+      // }
     }
 
     return tweetData;

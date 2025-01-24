@@ -20,10 +20,23 @@ export class TypesenseClient {
     });
   }
 
+  async searchRaw(
+    searchParameters: SearchParams,
+    args?: {
+      facetBy?: boolean;
+    }
+  ) {
+    if (args?.facetBy) {
+      searchParameters.facet_by = "keyTopics,keyEntities,keyUsers";
+    }
+    const searchResults = await this.client.collections<ParsedTweetData>("tweets").documents().search(searchParameters);
+    return searchResults;
+  }
+
   async search(query: string, filter?: { from?: number; to?: number }) {
     const searchParameters: SearchParams = {
       q: query,
-      query_by: "text, quote, retweet, user, quote_user, keyTopics, keyEntities",
+      query_by: "text, quote, user_name, keyTopics, keyHighlight, keyEntities",
       sort_by: "_text_match:desc,created_at:desc",
       per_page: 250,
       facet_by: "keyTopics,keyEntities,keyUsers",

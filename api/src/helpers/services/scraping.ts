@@ -21,23 +21,32 @@ export const tweetsScraper = async (body: TweetsScraperBody, env: CloudflareBind
   }
 
   console.log("done scraping", scrapeRequestId, "fullTweetData", fullTweetData.length);
-  // check if we already have any of the retweets
-  const retweetIds = fullTweetData.filter((tweet) => tweet.isRetweet && tweet.retweet?.id).map((tweet) => tweet.retweet!.id);
-  const existingRetweets = await new R2TweetsStorage(env).checkTweetExists(retweetIds);
+  // check if we already have any of the retweets, but why not just check all... saves an AI call
+  const parsedTweetData = await parseTweets(fullTweetData);
 
-  const fullTweetDataToSave = fullTweetData.filter((tweet) => {
-    if (tweet.isRetweet && tweet.retweet?.id) {
-      return !existingRetweets[tweet.retweet!.id];
-    }
-    return true;
+  const tweetIds = parsedTweetData.map((tweet) => tweet.id);
+  const existingTweets = await new R2TweetsStorage(env).checkTweetExists(tweetIds);
+
+  const parsedTweetDataToSave = parsedTweetData.filter((tweet) => {
+    return !existingTweets[tweet.id];
   });
-  const parsedTweetData = await parseTweets(fullTweetDataToSave);
+
+  const fullTweetDataToSave = parsedTweetDataToSave.map((parsedTweet) => {
+    // if (parsedTweet.sourced_from_retweet_by_tweet_id) {
+    //   const tweet = fullTweetData.find((tweet) => tweet.id === parsedTweet.sourced_from_retweet_by_tweet_id);
+    //   if (!tweet) throw new Error("sourced_from_retweet_by_tweet_id not found");
+    //   return tweet;
+    // }
+    const tweet = fullTweetData.find((tweet) => tweet.id === parsedTweet.id);
+    if (!tweet) throw new Error("Tweet not found from parsedTweetDataToSave");
+    return tweet;
+  });
 
   await doneScrapingTweets(
     scrapeRequestId,
     {
       fullTweetData: fullTweetDataToSave,
-      parsedTweetData,
+      parsedTweetData: parsedTweetDataToSave,
     },
     env
   );

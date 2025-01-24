@@ -2,7 +2,8 @@ import { DurableObject } from "cloudflare:workers";
 import { FullTweetData, ParsedTweetData, XUserInfo } from "../helpers/types";
 import { AiAnalyzeBody } from "../helpers/services/aiAnalyzing";
 import { SavedTweet } from "../helpers/services/saving";
-import { getXHandleDO, removeDuplicates } from "../helpers/utils";
+import { removeDuplicates } from "../helpers/utils";
+import { TypesenseClient } from "../classes/Typesense";
 
 export type UserScraperConfig = {
   userId: string;
@@ -143,12 +144,18 @@ export class ScrapeRequestsObject extends DurableObject {
       const config = scrapeConfigData.config as UserScraperConfig;
       // if until is not set, get it from the oldest tweet in the database
       if (!config.until) {
-        const handlerDO = getXHandleDO(this.env, config.userId);
-        const user = await handlerDO.getUser();
-        if (!user) {
+        const latestTweet = await new TypesenseClient(this.env).searchRaw({
+          q: "",
+          query_by: "text",
+          sort_by: "created_at:asc",
+          per_page: 1,
+          filter_by: `user_name:=${config.userId}`,
+        });
+        console.log("oldest tweet date", latestTweet.hits?.[0]?.document.created_at);
+        if (!latestTweet.hits?.length) {
           config.until = Date.now();
         } else {
-          config.until = user.metadata?.oldestTweetAt;
+          config.until = latestTweet.hits[0].document.created_at;
         }
       }
     }

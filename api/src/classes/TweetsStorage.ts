@@ -20,9 +20,20 @@ export class R2TweetsStorage {
     }
   }
 
+  async deleteRawFullTweetDataByIds(ids: string[]): Promise<void> {
+    const p1 = ids.map((id) => this.bucket.delete(RAW_TWEETS_LOCATION + "/" + id));
+    const p2 = ids.map((id) => this.bucket.delete(TWEETS_LOCATION + "/" + id));
+    await Promise.all([...p1, ...p2]);
+  }
+
   async listTweetIds(): Promise<string[]> {
     const result = await this.bucket.list({ include: ["customMetadata"], limit: 1000 });
     return result.objects.filter((obj) => !obj.key.startsWith(RAW_TWEETS_LOCATION)).map((obj) => obj.key.replace(TWEETS_LOCATION + "/", ""));
+  }
+
+  async listRawTweetIds(): Promise<string[]> {
+    const result = await this.bucket.list({ include: ["customMetadata"], limit: 1000 });
+    return result.objects.filter((obj) => obj.key.includes(RAW_TWEETS_LOCATION)).map((obj) => obj.key.replace(RAW_TWEETS_LOCATION + "/", ""));
   }
 
   async getTweetByID(id: string): Promise<FullTweetData | SavedTweet | null> {
@@ -35,7 +46,7 @@ export class R2TweetsStorage {
 
   async checkTweetExists(id: string | string[]): Promise<Record<string, boolean>> {
     const ids = Array.isArray(id) ? id : [id];
-    const promises = ids.map((id) => this.bucket.head(RAW_TWEETS_LOCATION + "/" + id));
+    const promises = ids.map((id) => this.bucket.head(TWEETS_LOCATION + "/" + id));
     const results = await Promise.all(promises);
     return results.reduce((acc, result, index) => {
       acc[ids[index]] = result !== null;
