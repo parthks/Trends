@@ -38,7 +38,7 @@ export class TypesenseClient {
       q: query,
       query_by: "text, quote, user_name, keyTopics, keyHighlight, keyEntities",
       sort_by: "_text_match:desc,created_at:desc",
-      per_page: 250,
+      per_page: 100,
       facet_by: "keyTopics,keyEntities,keyUsers,user_name",
     };
 

@@ -88,27 +88,31 @@ export class LLM {
     });
   }
 
-  async summarizeTweets(tweets: ParsedTweetData[]) {
+  async streamAnswerFromTweets(userPromptString: string, tweets: ParsedTweetData[]) {
     const tweetsMessage = this.parseTweetsIntoMessage(tweets);
-    const prompt = `
-    Summarize the key updates from tweets. Use only the provided tweets as the source material, and avoid repeating anything. If there is an external link in the tweets (like to a website or blog), include it so people can easily explore more.
-    Focus on delivering a concise, actionable summary without unnecessary openings or conclusions. Use a friendly but efficient tone, and only include the essential updates.
-    \n\nTweets Data:\n${tweetsMessage}`;
+    const systemPrompt = `
+    You are a helpful assistant and an expert in crafting “Trend Posts” using tweets as context.
+    Your role is to provide clear, direct answers and suggestions based on the tweets.
+    Do not include filler, disclaimers, or any text other than what directly helps fulfill the user’s request.
+    `;
 
-    const response = await this.workerAIClient.run(
-      this.MODEL_NAME,
-      {
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful assistant expert in summarizing tweets. Do not include any helper text in your response. Only output the summary. ",
-          },
-          { role: "user", content: prompt },
-        ],
-      },
-      { gateway: { id: "trends" } }
-    );
-    return response;
+    const tweetsContext = `
+    Here is the context of the tweets:
+    ${tweetsMessage}
+    `;
+
+    const userPrompt = `
+    ${userPromptString}
+    `;
+
+    return streamText({
+      model: this.gpt4oMini,
+      system: systemPrompt,
+      messages: [
+        { role: "user", content: userPrompt },
+        { role: "user", content: tweetsContext },
+      ],
+    });
   }
 
   async analyzeTweet(tweet: ParsedTweetData, userInfo: XUserInfo): Promise<AiAnalyzedData> {
@@ -153,7 +157,7 @@ export class LLM {
   private parseTweetsIntoMessage(searchDocuments: ParsedTweetData[]): string {
     // segment tweets by day
     const tweetsByDate = searchDocuments.reduce((acc, tweet) => {
-      const date = new Date(tweet.created_at * 1000).toISOString();
+      const date = new Date(tweet.created_at).toISOString().split("T")[0];
       acc[date] = acc[date] || [];
       acc[date].push(tweet);
       return acc;
@@ -164,8 +168,11 @@ export class LLM {
       .map(([date, tweets]) => {
         return `Date: ${date}\n${tweets
           .map((tweet) => {
-            return `Tweet: ${tweet.text}\n 
-                      ${tweet.quote ? `Quote: ${tweet.quote}` : ""}\n`;
+            return `
+            Tweeted By: ${tweet.user_name}
+            Tweet: ${tweet.text}
+            Quote: ${tweet.quote ? tweet.quote : ""}
+            `;
           })
           .join("\n")}\n\n`;
       })

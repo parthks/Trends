@@ -11,6 +11,7 @@ import { AiAnalyzeBody, aiAnalyze, aiAnalyzeInQueue } from "./helpers/services/a
 import { SavedTweet, saveTweets } from "./helpers/services/saving";
 import { tweetsScraper } from "./helpers/services/scraping";
 import { getScrapeRequestDO } from "./helpers/utils";
+import { TrendSnapshot } from "./helpers/types";
 
 export { ScrapeRequestsObject };
 
@@ -356,6 +357,18 @@ app.post("/ai/query", async (c) => {
   // return c.json({ response: aiAnswer, context: results });
 });
 
+app.post("/ai/chat", async (c) => {
+  const body = await c.req.json();
+  const { prompt, tweets } = body;
+  if (!prompt) return c.json({ error: "Prompt is required" }, 400);
+  const stream = await new LLM(c.env).streamAnswerFromTweets(prompt, tweets ?? []);
+  return stream.toDataStreamResponse({
+    headers: {
+      "Content-Type": "text/event-stream",
+    },
+  });
+});
+
 app.get("/ai", async (c) => {
   const llmResult = await new LLM(c.env).introduce("introduce yourself");
   // if (LLM.hasResponse(llmResult) && llmResult.response) {
@@ -364,21 +377,50 @@ app.get("/ai", async (c) => {
   return c.json({ result: llmResult });
 });
 
-// convert this to a stream
-app.get("/search/summary/:query", async (c) => {
-  const query = c.req.param("query");
-  if (!query) return c.json({ error: "Query is required" }, 400);
+app.post("/trend", async (c) => {
+  const body = await c.req.json();
+  const { title, description, data, tweets } = body;
+  if (!title || !description || !data || !tweets) return c.json({ error: "All fields are required" }, 400);
 
-  const from = c.req.query("from");
-  const to = c.req.query("to");
-  const fromParam = from ? parseInt(from) : undefined;
-  const toParam = to ? parseInt(to) : undefined;
-
-  const results = await new TypesenseClient(c.env).search(query, { from: fromParam, to: toParam });
-  if (!results.hits) return c.json({ error: "No result" }, 500);
-  const summary = await new LLM(c.env).summarizeTweets(results.hits.map((hit) => hit.document));
-  if (LLM.hasResponse(summary)) {
-    return c.json({ summary: summary.response, prompt: summary, results });
-  }
-  return c.json({ error: "No result" }, 500);
+  const trend: TrendSnapshot = {
+    id: crypto.randomUUID(),
+    title,
+    description,
+    data,
+    tweets,
+    createdAt: new Date(),
+  };
+  await new R2TweetsStorage(c.env).storeTrend(trend);
+  return c.json(trend);
 });
+
+app.get("/trend/:id", async (c) => {
+  const id = c.req.param("id");
+  const trend = await new R2TweetsStorage(c.env).getTrend(id);
+  if (!trend) return c.json({ error: "Trend not found" }, 404);
+  return c.json(trend);
+});
+
+app.get("/trend", async (c) => {
+  const trends = await new R2TweetsStorage(c.env).getAllTrends();
+  return c.json(trends);
+});
+
+// convert this to a stream
+// app.get("/search/summary/:query", async (c) => {
+//   const query = c.req.param("query");
+//   if (!query) return c.json({ error: "Query is required" }, 400);
+
+//   const from = c.req.query("from");
+//   const to = c.req.query("to");
+//   const fromParam = from ? parseInt(from) : undefined;
+//   const toParam = to ? parseInt(to) : undefined;
+
+//   const results = await new TypesenseClient(c.env).search(query, { from: fromParam, to: toParam });
+//   if (!results.hits) return c.json({ error: "No result" }, 500);
+//   const summary = await new LLM(c.env).streamAnswerFromTweets(results.hits.map((hit) => hit.document));
+//   if (LLM.hasResponse(summary)) {
+//     return c.json({ summary: summary.response, prompt: summary, results });
+//   }
+//   return c.json({ error: "No result" }, 500);
+// });

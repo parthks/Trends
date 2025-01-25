@@ -7,6 +7,8 @@ interface TimelineProps {
   onDateClick: (fromDate?: number, toDate?: number) => void;
 }
 
+const MIN_DATE = new Date(2024, 0, 0);
+
 export default function Timeline({ onDateClick }: TimelineProps) {
   const [selectedRange, setSelectedRange] = useState<TimeRange>("all");
   const [items, setItems] = useState<Date[]>([]);
@@ -20,17 +22,26 @@ export default function Timeline({ onDateClick }: TimelineProps) {
     switch (range) {
       case "daily":
         for (let i = 0; i < 30; i++) {
-          newItems.push(subDays(today, i));
+          const date = subDays(today, i);
+          if (date >= MIN_DATE) {
+            newItems.push(date);
+          }
         }
         break;
       case "weekly":
         for (let i = 0; i < 12; i++) {
-          newItems.push(startOfWeek(subWeeks(today, i)));
+          const date = startOfWeek(subWeeks(today, i));
+          if (date >= MIN_DATE) {
+            newItems.push(date);
+          }
         }
         break;
       case "monthly":
         for (let i = 0; i < 12; i++) {
-          newItems.push(subMonths(today, i));
+          const date = subMonths(today, i);
+          if (date >= MIN_DATE) {
+            newItems.push(date);
+          }
         }
         break;
     }
@@ -47,21 +58,32 @@ export default function Timeline({ onDateClick }: TimelineProps) {
     switch (selectedRange) {
       case "daily":
         for (let i = 1; i <= 30; i++) {
-          newItems.push(subDays(lastDate, i));
+          const date = subDays(lastDate, i);
+          if (date >= MIN_DATE) {
+            newItems.push(date);
+          }
         }
         break;
       case "weekly":
         for (let i = 1; i <= 12; i++) {
-          newItems.push(startOfWeek(subWeeks(lastDate, i)));
+          const date = startOfWeek(subWeeks(lastDate, i));
+          if (date >= MIN_DATE) {
+            newItems.push(date);
+          }
         }
         break;
       case "monthly":
         for (let i = 1; i <= 12; i++) {
-          newItems.push(subMonths(lastDate, i));
+          const date = subMonths(lastDate, i);
+          if (date >= MIN_DATE) {
+            newItems.push(date);
+          }
         }
         break;
     }
-    setItems([...items, ...newItems]);
+    if (newItems.length > 0) {
+      setItems([...items, ...newItems]);
+    }
   };
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {

@@ -1,14 +1,38 @@
 import { SavedTweet } from "../helpers/services/saving";
-import { FullTweetData } from "../helpers/types";
+import { FullTweetData, TrendSnapshot } from "../helpers/types";
 
 const TWEETS_LOCATION = "tweets";
 const RAW_TWEETS_LOCATION = "tweets/raw";
+
+const TRENDS_LOCATION = "trends";
 
 export class R2TweetsStorage {
   private bucket: R2Bucket;
 
   constructor(binding: CloudflareBindings) {
     this.bucket = binding.TWEETS_BUCKET;
+  }
+
+  async storeTrend(trend: TrendSnapshot) {
+    await this.bucket.put(TRENDS_LOCATION + "/" + trend.id, JSON.stringify(trend));
+  }
+
+  async getTrend(id: string): Promise<TrendSnapshot | null> {
+    const result = await this.bucket.get(TRENDS_LOCATION + "/" + id);
+    if (!result) {
+      return null;
+    }
+    return result.json();
+  }
+
+  async getAllTrends(): Promise<TrendSnapshot[]> {
+    const result = await this.bucket.list({ include: ["customMetadata"], limit: 1000 });
+    const trends = await Promise.all(result.objects.filter((obj) => obj.key.startsWith(TRENDS_LOCATION)).map((obj) => this.bucket.get(obj.key).then((res) => res?.json())));
+    return trends as TrendSnapshot[];
+  }
+
+  async deleteTrend(id: string): Promise<void> {
+    await this.bucket.delete(TRENDS_LOCATION + "/" + id);
   }
 
   async deleteAll() {

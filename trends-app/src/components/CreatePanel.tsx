@@ -1,0 +1,87 @@
+import { publishTrend } from "@/api/trend";
+import { useLocalStore } from "@/lib/store";
+import { TrendSnapshot } from "@/types/trend";
+import { useRef, useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+import { useNavigate } from "react-router-dom";
+
+export default function CreatePanel() {
+  const tweetsInCart = useLocalStore((state) => state.tweets);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  const quillRef = useRef<ReactQuill | null>(null); // Ref to access Quill instance
+  const navigate = useNavigate();
+
+  const handlePublish = async () => {
+    const data = {
+      title,
+      description,
+      data: content,
+      tweets: tweetsInCart,
+    };
+    setIsPublishing(true);
+    const trend = (await publishTrend(data)) as TrendSnapshot;
+    setIsPublishing(false);
+    console.log("trend", trend);
+    navigate(`/trend/${trend.id}`);
+  };
+
+  return (
+    <div className="h-full">
+      <label className="text-lg font-bold mb-2">Title</label>
+      <input
+        onChange={(e) => {
+          setTitle(e.target.value);
+        }}
+        value={title}
+        className="border-2 border-gray-300 rounded-md p-2 pr-6 w-full"
+        type="text"
+        placeholder="Enter a title for your Trend Snapshot"
+      />
+
+      <div className="mt-4" />
+
+      <label className="text-lg font-bold mb-2">Description</label>
+      <textarea
+        onChange={(e) => {
+          setDescription(e.target.value);
+        }}
+        rows={4}
+        value={description}
+        className="border-2 border-gray-300 rounded-md p-2 pr-6 w-full"
+        placeholder="Enter a description for your Trend Snapshot"
+      />
+
+      <div className="mt-4" />
+
+      <label className="text-lg font-bold mb-2">Trend Snapshot</label>
+      <ReactQuill
+        ref={quillRef}
+        theme="snow"
+        value={content}
+        onChange={setContent}
+        className="h-[400px] mb-16"
+        modules={{
+          toolbar: [
+            [{ header: [1, 2, 3, 4, false] }],
+            ["bold", "italic", "underline", "strike"],
+            ["blockquote"],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ script: "sub" }, { script: "super" }],
+            ["link"],
+          ],
+        }}
+      />
+
+      <div className="mt-4" />
+
+      <button disabled={isPublishing} onClick={handlePublish} className="bg-blue-500 text-white px-4 py-2 w-full rounded-md">
+        {isPublishing ? "Publishing..." : "Ready to Publish"}
+      </button>
+    </div>
+  );
+}
