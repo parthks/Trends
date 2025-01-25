@@ -81,7 +81,7 @@ export default function CreatePanel() {
         </div>
       </div>
 
-      <div className="shrink-0 bg-white p-4">
+      <div className="fixed shrink-0 bg-white p-4 bottom-0 left-0 right-0">
         <button
           disabled={isPublishing || !title || !description || !content}
           onClick={handlePublish}

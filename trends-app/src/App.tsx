@@ -55,7 +55,7 @@ function App() {
           </Link>
           <NavLinks />
         </nav>
-        <main className="h-[calc(100vh-64px)] overflow-hidden">
+        <main className="h-[calc(100vh-64px)] overflow-hidden sm:pb-8 pb-20">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/search" element={<Search />} />
