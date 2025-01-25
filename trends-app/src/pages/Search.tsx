@@ -1,14 +1,12 @@
+import { useLocalStore } from "@/lib/store";
 import { useEffect, useState } from "react";
 import { searchAPI } from "../api/search";
 import FormattedTweet from "../components/FormattedTweet";
 import SearchBar from "../components/SearchBar";
+import { SearchFaucetResults } from "../components/SearchFaucetResults";
+import Timeline from "../components/Timeline";
 import { SearchResult, SearchResultFacetField } from "../types/search";
 import { TypesenseTweetData } from "../types/tweet";
-import Timeline from "../components/Timeline";
-import { format } from "date-fns";
-import { SearchFaucetResults } from "../components/SearchFaucetResults";
-import AddTweetToCart from "@/components/AddTweetToCart";
-import { useLocalStore } from "@/lib/store";
 
 export default function Search() {
   const [results, setResults] = useState<TypesenseTweetData[]>([]);
@@ -83,15 +81,7 @@ export default function Search() {
       <div className="flex-1 min-h-0">
         <div className="flex flex-col gap-4">
           {results.map((result) => (
-            <div key={result.id} className="flex flex-col gap-1 border rounded p-4">
-              <AddTweetToCart tweet={result} />
-              <div className="flex justify-between gap-1">
-                <p className="text-sm text-gray-500">Tweeted on {format(new Date(result.created_at), "dd MMM yyyy")}</p>
-                <p className="text-sm text-gray-500">{result.is_reply ? "Reply" : result.is_quote ? "Quoted" : "Original"}</p>
-              </div>
-              <p className="text-sm text-gray-500">Key Insight: {result.keyHighlight}</p>
-              <FormattedTweet tweet={result} />
-            </div>
+            <FormattedTweet key={result.id} tweet={result} />
           ))}
         </div>
       </div>

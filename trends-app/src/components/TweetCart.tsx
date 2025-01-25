@@ -32,19 +32,19 @@ export default function TweetCart() {
         {<p className="text-sm text-gray-500">Displaying {filteredTweets.length} tweets</p>}
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="w-full flex flex-col gap-4 mt-4">
         <LazyLoadContent
           scrollDirection="vertical"
           dataArray={filteredTweets}
           renderItem={(tweet) => (
             <div key={tweet.id} className="flex-grow">
-              <div className="relative w-full flex gap-2">
-                <div className="min-h-[200px]">
-                  <Tweet id={tweet.id} />
-                </div>
-                <button className="text-sm text-red-500 hover:text-red-700" onClick={() => removeTweet(tweet)}>
+              <div className="relative flex flex-col items-start gap-2 w-full">
+                <button className="absolute top-0 left-0 text-sm text-red-500 hover:text-red-700" onClick={() => removeTweet(tweet)}>
                   Remove
                 </button>
+                <div className="w-full ">
+                  <Tweet id={tweet.id} />
+                </div>
               </div>
             </div>
           )}

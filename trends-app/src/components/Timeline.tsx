@@ -141,25 +141,27 @@ export default function Timeline({ onDateClick }: TimelineProps) {
   return (
     <div className="w-full">
       {/* Tabs */}
-      <div className="flex items-center gap-4 mb-4 justify-center">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
         <div>
           <p className="text-lg font-bold">Timeline Filter:</p>
         </div>
-        {["all", "monthly", "weekly", "daily"].map((range) => (
-          <button
-            key={range}
-            className={`px-4 py-2 rounded ${selectedRange === range ? "bg-blue-500 text-white" : "bg-gray-200"}`}
-            onClick={() => {
-              setSelectedRange(range as TimeRange);
-              generateItems(range as TimeRange);
-              if (range === "all") {
-                onDateClick(undefined, undefined);
-              }
-            }}
-          >
-            {range.charAt(0).toUpperCase() + range.slice(1)}
-          </button>
-        ))}
+        <div className="flex items-center gap-4">
+          {["all", "monthly", "weekly", "daily"].map((range) => (
+            <button
+              key={range}
+              className={`px-4 py-2 rounded ${selectedRange === range ? "bg-blue-500 text-white" : "bg-gray-200"}`}
+              onClick={() => {
+                setSelectedRange(range as TimeRange);
+                generateItems(range as TimeRange);
+                if (range === "all") {
+                  onDateClick(undefined, undefined);
+                }
+              }}
+            >
+              {range.charAt(0).toUpperCase() + range.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Timeline content */}

@@ -28,7 +28,7 @@ function NavLinks() {
           Query
         </Link>
       </div>
-      <div className="flex gap-4">
+      <div className="sm:flex gap-4 hidden">
         <Link to="/create" style={getLinkStyle("/create")}>
           Create Trend Snapshot
         </Link>

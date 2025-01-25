@@ -9,26 +9,63 @@ import Query from "./Query";
 import Search from "./Search";
 
 export default function Create() {
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+
   return (
-    <div className="p-4 max-h-[calc(100vh-64px)] h-[calc(100vh-64px)] overflow-x-hidden">
-      <h1 className="text-2xl font-bold mb-4">Create Trend Snapshot</h1>
-      <Split
-        className="flex gap-4 h-[calc(100vh-144px)] max-h-[calc(100vh-144px)]"
-        sizes={[50, 50]}
-        minSize={200}
-        gutterStyle={() => ({
-          backgroundColor: "#e2e8f0",
-          width: "4px",
-          cursor: "col-resize",
-        })}
-      >
-        <div className="overflow-auto h-full">
-          <CreatePanel />
-        </div>
-        <div className="overflow-auto h-full">
-          <SearchPanel />
-        </div>
-      </Split>
+    <div className="p-4 h-full overflow-x-hidden">
+      <div className="flex justify-between items-center mb-1 sm:mb-4">
+        <h1 className="text-2xl font-bold">Create Trend Snapshot</h1>
+        <button className="md:hidden m-2" onClick={() => setShowMobileSearch(!showMobileSearch)}>
+          {showMobileSearch ? (
+            // close icon
+            <button className="p-2 rounded-md bg-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          ) : (
+            // search icon
+            <button className="p-2 rounded-md bg-gray-200">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+            </button>
+          )}
+        </button>
+      </div>
+      {/* split view for desktop */}
+      <div className="hidden md:block">
+        <Split
+          className="flex gap-4 h-[calc(100vh-144px)] max-h-[calc(100vh-144px)]"
+          sizes={[50, 50]}
+          minSize={200}
+          gutterStyle={() => ({
+            backgroundColor: "#e2e8f0",
+            width: "4px",
+            cursor: "col-resize",
+          })}
+        >
+          <div className="overflow-auto h-full">
+            <CreatePanel />
+          </div>
+          <div className="overflow-auto h-full">
+            <SearchPanel />
+          </div>
+        </Split>
+      </div>
+
+      {/* mobile view */}
+      <div className="md:hidden flex flex-col gap-16">
+        {showMobileSearch ? (
+          <div className="overflow-auto h-full">
+            <SearchPanel />
+          </div>
+        ) : (
+          <div className="overflow-auto h-full">
+            <CreatePanel />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -2,8 +2,7 @@ import { getTrend } from "@/api/trend";
 import FormattedTweet from "@/components/FormattedTweet";
 import { TrendSnapshot } from "@/types/trend";
 import { TypesenseTweetData } from "@/types/tweet";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 export default function TrendSnapshotPage() {
@@ -46,9 +45,7 @@ export default function TrendSnapshotPage() {
             <h2 className="text-2xl font-semibold mb-4">Related Tweets</h2>
             <div className="space-y-4">
               {trend.tweets.map((tweet) => (
-                <div key={tweet.id} className="border rounded-lg p-4">
-                  <FormattedTweet tweet={tweet as TypesenseTweetData} />
-                </div>
+                <FormattedTweet tweet={tweet as TypesenseTweetData} />
               ))}
             </div>
           </section>

@@ -31,57 +31,65 @@ export default function CreatePanel() {
   };
 
   return (
-    <div className="h-full">
-      <label className="text-lg font-bold mb-2">Title</label>
-      <input
-        onChange={(e) => {
-          setTitle(e.target.value);
-        }}
-        value={title}
-        className="border-2 border-gray-300 rounded-md p-2 pr-6 w-full"
-        type="text"
-        placeholder="Enter a title for your Trend Snapshot"
-      />
+    <div className="h-full flex flex-col min-h-[calc(100vh-180px)] md:min-h-0">
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <label className="text-lg font-bold mb-2">Title</label>
+        <input
+          onChange={(e) => {
+            setTitle(e.target.value);
+          }}
+          value={title}
+          className="border-2 border-gray-300 rounded-md p-2 pr-6 w-full"
+          type="text"
+          placeholder="Enter a title for your Trend Snapshot"
+        />
 
-      <div className="mt-4" />
+        <div className="mt-4" />
 
-      <label className="text-lg font-bold mb-2">Description</label>
-      <textarea
-        onChange={(e) => {
-          setDescription(e.target.value);
-        }}
-        rows={4}
-        value={description}
-        className="border-2 border-gray-300 rounded-md p-2 pr-6 w-full"
-        placeholder="Enter a description for your Trend Snapshot"
-      />
+        <label className="text-lg font-bold mb-2">Description</label>
+        <textarea
+          onChange={(e) => {
+            setDescription(e.target.value);
+          }}
+          rows={4}
+          value={description}
+          className="border-2 border-gray-300 rounded-md p-2 pr-6 w-full"
+          placeholder="Enter a description for your Trend Snapshot"
+        />
 
-      <div className="mt-4" />
+        <div className="mt-4" />
 
-      <label className="text-lg font-bold mb-2">Trend Snapshot</label>
-      <ReactQuill
-        ref={quillRef}
-        theme="snow"
-        value={content}
-        onChange={setContent}
-        className="h-[400px] mb-16"
-        modules={{
-          toolbar: [
-            [{ header: [1, 2, 3, 4, false] }],
-            ["bold", "italic", "underline", "strike"],
-            ["blockquote"],
-            [{ list: "ordered" }, { list: "bullet" }],
-            [{ script: "sub" }, { script: "super" }],
-            ["link"],
-          ],
-        }}
-      />
+        <label className="text-lg font-bold mb-2">Trend Snapshot</label>
+        <div className="flex-1 h-[calc(100vh-600px)]">
+          <ReactQuill
+            ref={quillRef}
+            theme="snow"
+            value={content}
+            onChange={setContent}
+            className="h-[calc(100vh-600px)] mb-16"
+            modules={{
+              toolbar: [
+                [{ header: [1, 2, 3, 4, false] }],
+                ["bold", "italic", "underline", "strike"],
+                ["blockquote"],
+                [{ list: "ordered" }, { list: "bullet" }],
+                [{ script: "sub" }, { script: "super" }],
+                ["link"],
+              ],
+            }}
+          />
+        </div>
+      </div>
 
-      <div className="mt-4" />
-
-      <button disabled={isPublishing} onClick={handlePublish} className="bg-blue-500 text-white px-4 py-2 w-full rounded-md">
-        {isPublishing ? "Publishing..." : "Ready to Publish"}
-      </button>
+      <div className="shrink-0 bg-white p-4">
+        <button
+          disabled={isPublishing || !title || !description || !content}
+          onClick={handlePublish}
+          className="bg-blue-500 text-white px-4 py-2 w-full rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isPublishing ? "Publishing..." : "Ready to Publish"}
+        </button>
+      </div>
     </div>
   );
 }
