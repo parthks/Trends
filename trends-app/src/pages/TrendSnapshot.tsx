@@ -30,7 +30,7 @@ export default function TrendSnapshotPage() {
   if (!trend) return <div>Trend not found</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 h-full overflow-y-auto">
+    <div className="max-w-5xl mx-auto p-6 h-full overflow-y-auto">
       <div className="h-full overflow-y-auto">
         <header className="mb-8">
           <h1 className="text-3xl font-bold mb-2">{trend.title}</h1>
@@ -38,7 +38,7 @@ export default function TrendSnapshotPage() {
           <time className="text-sm text-gray-500">Created on {new Date(trend.createdAt).toLocaleDateString()}</time>
         </header>
 
-        <div className="prose prose-md max-w-none mb-8" dangerouslySetInnerHTML={{ __html: trend.data }} />
+        <div className="prose prose-md max-w-none mb-8 [&>p]:my-0" dangerouslySetInnerHTML={{ __html: trend.data }} />
 
         {trend.tweets && trend.tweets.length > 0 && (
           <section className="border-t pt-6">

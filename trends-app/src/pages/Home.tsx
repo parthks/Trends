@@ -3,16 +3,18 @@ import { useState } from "react";
 import { getAllTrends } from "@/api/trend";
 import { useEffect } from "react";
 import { TrendSnapshot } from "@/types/trend";
-import { TrendCard } from "@/components/TrendCard";
+import { TrendCard, TrendCardSkeleton } from "@/components/TrendCard";
 import { Link } from "react-router-dom";
 
 export default function Home() {
   const [trends, setTrends] = useState<TrendSnapshot[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchTrends = async () => {
       const trends = await getAllTrends();
       setTrends(trends);
+      setIsLoading(false);
     };
     fetchTrends();
   }, []);
@@ -42,12 +44,20 @@ export default function Home() {
         </Link>
       </div>
 
-      <div className="flex flex-col items-center justify-center">
-        {trends.map((trend) => (
-          <Link prefetch="intent" to={`/trend/${trend.id}`} key={trend.id}>
-            <TrendCard trend={trend} />
-          </Link>
-        ))}
+      <div className="flex flex-col items-center justify-center gap-4">
+        {isLoading ? (
+          <>
+            <TrendCardSkeleton />
+            <TrendCardSkeleton />
+            <TrendCardSkeleton />
+          </>
+        ) : (
+          trends.map((trend) => (
+            <Link prefetch="intent" to={`/trend/${trend.id}`} key={trend.id}>
+              <TrendCard trend={trend} />
+            </Link>
+          ))
+        )}
       </div>
     </div>
   );

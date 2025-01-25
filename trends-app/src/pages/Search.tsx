@@ -52,7 +52,7 @@ export default function Search() {
   console.log({ fromUsers, users, topics, entities, results });
 
   return (
-    <div className="h-full p-4 overflow-auto flex flex-col">
+    <div className="h-full p-4 overflow-auto flex flex-col max-w-7xl mx-auto">
       <div className="flex-none">
         <div className="flex justify-center">
           <SearchBar value={searchString} onDebounceSearch={handleSearch} />
