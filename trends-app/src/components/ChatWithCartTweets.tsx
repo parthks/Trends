@@ -28,7 +28,7 @@ export default function ChatWithCartTweets() {
       setChatResult("");
       return chatAPI(input, init);
     },
-    onFinish: async (prompt, completion) => {
+    onFinish: async (_, completion) => {
       setChatFinished(true);
       console.log("doneee", completion);
       setChatResult(completion);
