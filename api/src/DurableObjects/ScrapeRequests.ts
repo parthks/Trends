@@ -1,14 +1,14 @@
 import { DurableObject } from "cloudflare:workers";
-import { FullTweetData, ParsedTweetData, XUserInfo } from "../helpers/types";
-import { AiAnalyzeBody } from "../helpers/services/aiAnalyzing";
-import { SavedTweet } from "../helpers/services/saving";
-import { removeDuplicates } from "../helpers/utils";
 import { TypesenseClient } from "../classes/Typesense";
+import { AiAnalyzeBody } from "../helpers/services/aiAnalyzing";
+import { FullTweetData } from "../helpers/types";
+import { removeDuplicates } from "../helpers/utils";
 
 export type UserScraperConfig = {
   userId: string;
-  until?: number;
   maxItems?: number;
+  until?: Date;
+  since?: Date;
 };
 type tweetScraperConfig = {
   tweetId: string;
@@ -81,7 +81,6 @@ export class ScrapeRequestsObject extends DurableObject {
   }
 
   async getData(): Promise<ScrapeData | null> {
-    console.log("scrapeState", this.scrapeState);
     const data = await this.ctx.storage.get("scrapeState");
     return data as ScrapeData | null;
   }
@@ -108,6 +107,13 @@ export class ScrapeRequestsObject extends DurableObject {
       };
       this.scrapeState.scrapedTweetIds = removeDuplicates([...(this.scrapeState.scrapedTweetIds || []), tweetData.id]);
       await this.AI_ANALYZER_QUEUE.send(body);
+    }
+
+    if (fullTweetData.length === 0) {
+      this.scrapeState.scrapeRequestStatus = ScrapeRequestStatus.COMPLETED;
+      this.scrapeState.scrapeCompletedDate = Date.now();
+      await this.saveData();
+      return;
     }
 
     this.scrapeState.scrapeRequestStatus = ScrapeRequestStatus.AI_ANALYZING;
@@ -142,20 +148,22 @@ export class ScrapeRequestsObject extends DurableObject {
     const { scrapeRequestId, ...scrapeConfigData } = scrapeRequest;
     if (scrapeConfigData.scrapeRequest == "user") {
       const config = scrapeConfigData.config as UserScraperConfig;
-      // if until is not set, get it from the oldest tweet in the database
-      if (!config.until) {
+      // if since_time is not set, get it from the latest tweet in the database - will scrape from the latest tweet to now
+      // else if first scrape, start from 2024-01-01
+      if (!config.since) {
+        console.log("no since_time or since, so getting latest tweet");
         const latestTweet = await new TypesenseClient(this.env).searchRaw({
           q: "",
           query_by: "text",
-          sort_by: "created_at:asc",
+          sort_by: "created_at:desc",
           per_page: 1,
           filter_by: `user_name:=${config.userId}`,
         });
-        console.log("oldest tweet date", latestTweet.hits?.[0]?.document.created_at);
+        console.log("latest tweet date", latestTweet.hits?.[0]?.document.created_at);
         if (!latestTweet.hits?.length) {
-          config.until = Date.now();
+          config.since = new Date(2024, 1, 1);
         } else {
-          config.until = latestTweet.hits[0].document.created_at;
+          config.since = new Date(latestTweet.hits[0].document.created_at);
         }
       }
     }

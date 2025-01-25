@@ -82,15 +82,6 @@ app.get("/", (c) => {
   return c.text("Hello Hono!");
 });
 
-app.get("/ai", async (c) => {
-  const llmResult = await new LLM(c.env).introduce("introduce yourself");
-  console.log(llmResult);
-  // if (LLM.hasResponse(llmResult) && llmResult.response) {
-  //   return c.text(llmResult.response);
-  // }
-  return c.json({ result: llmResult });
-});
-
 app.get("/storage/tweets", async (c) => {
   const tweets = await new R2TweetsStorage(c.env).listTweetIds();
   return c.json(tweets);
@@ -207,8 +198,6 @@ app.get("/scrape/:scrapeRequestId", async (c) => {
   const objectScrapeID = c.env.SCRAPE_REQUESTS.idFromString(scrapeRequestId);
   const stub = c.env.SCRAPE_REQUESTS.get(objectScrapeID);
 
-  console.log(stub);
-  // const scrapeRequest = await stub.startedScraping();
   const scrapeRequest = await stub.getData();
   return c.json(scrapeRequest);
 });
@@ -217,7 +206,6 @@ app.post("/scrape/:userId", async (c) => {
   const userId = c.req.param("userId");
   const body = await c.req.json();
   const { config = {} } = body;
-  const { maxItems = 10, until = undefined } = config;
 
   const id = await c.env.SCRAPE_REQUESTS.newUniqueId();
   const scrapeRequestId = id.toString();
@@ -226,7 +214,7 @@ app.post("/scrape/:userId", async (c) => {
   const scrapeRequest: TweetsScraperBody = {
     scrapeRequestId,
     scrapeRequest: "user",
-    config: { userId, maxItems, until },
+    config: { userId, ...config },
   };
 
   await stub.startNewScrape(scrapeRequest);
@@ -357,15 +345,23 @@ app.post("/ai/query", async (c) => {
   const { prompt, options } = body;
   if (!prompt) return c.json({ error: "Prompt is required" }, 400);
   const results = await new PineconeClient(c.env).query(prompt, PineconeNamespace.TWEETS, { ...(options ?? {}), includeMetadata: true });
-
+  console.log("got pinencone results", results);
   const stream = await new LLM(c.env).streamAnswerQuestion(prompt, results.map((hit) => hit.text).join("\n"));
-
+  console.log("got llm stream", stream);
   return stream.toDataStreamResponse({
     headers: {
       "Content-Type": "text/event-stream",
     },
   });
   // return c.json({ response: aiAnswer, context: results });
+});
+
+app.get("/ai", async (c) => {
+  const llmResult = await new LLM(c.env).introduce("introduce yourself");
+  // if (LLM.hasResponse(llmResult) && llmResult.response) {
+  //   return c.text(llmResult.response);
+  // }
+  return c.json({ result: llmResult });
 });
 
 // convert this to a stream

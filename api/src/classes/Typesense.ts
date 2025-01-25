@@ -39,7 +39,7 @@ export class TypesenseClient {
       query_by: "text, quote, user_name, keyTopics, keyHighlight, keyEntities",
       sort_by: "_text_match:desc,created_at:desc",
       per_page: 250,
-      facet_by: "keyTopics,keyEntities,keyUsers",
+      facet_by: "keyTopics,keyEntities,keyUsers,user_name",
     };
 
     if (filter && (filter.from || filter.to)) {

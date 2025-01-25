@@ -1,10 +1,9 @@
 import { ApifyClient } from "apify-client";
-import { parseTweets } from "../helpers/parse";
-import { FullTweetData, ParsedTweetData } from "../helpers/types";
+import { FullTweetData } from "../helpers/types";
 
 interface ScrapeMetadata {
   maxItems?: number;
-  until?: number;
+  searchTerms: string[];
 }
 
 const TWEET_SCRAPER_ACTOR = "61RPP7dywgiy0JPD0";
@@ -28,9 +27,17 @@ export class Scraper {
 
   async scrapeUserTweets(userHandle: string, metadata: ScrapeMetadata): Promise<{ fullTweetData: FullTweetData[] }> {
     // Prepare Actor input
-    const until = metadata.until ? new Date(metadata.until).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+    // const untilTimestamp = metadata.until_time_in_seconds ? metadata.until_time_in_seconds / 1000 : new Date().getTime() / 1000;
+    // const sinceTimestamp = metadata.since_time_in_seconds ? metadata.since_time_in_seconds / 1000 : null;
+    // const searchTerms = ["from:" + userHandle];
+    // if (untilTimestamp) {
+    //   searchTerms.push("until_time:" + untilTimestamp);
+    // }
+    // if (sinceTimestamp) {
+    //   searchTerms.push("since_time:" + sinceTimestamp);
+    // }
     const input = {
-      searchTerms: ["from:" + userHandle + " until:" + until + " include:nativeretweets"], // + " -filter:replies"],
+      searchTerms: metadata.searchTerms,
       maxItems: metadata.maxItems ?? 10,
       sort: "Latest",
     };

@@ -2,7 +2,7 @@ import { Scraper } from "../../classes/Apify";
 import { R2TweetsStorage } from "../../classes/TweetsStorage";
 import { TweetsScraperBody, UserScraperConfig } from "../../DurableObjects/ScrapeRequests";
 import { parseTweets } from "../parse";
-import { FullTweetData, ParsedTweetData, XUserInfo } from "../types";
+import { FullTweetData, ParsedTweetData } from "../types";
 import { getScrapeRequestDO } from "../utils";
 
 export const tweetsScraper = async (body: TweetsScraperBody, env: CloudflareBindings) => {
@@ -12,9 +12,23 @@ export const tweetsScraper = async (body: TweetsScraperBody, env: CloudflareBind
   console.log("started scraping", scrapeRequestId, config);
 
   if (scrapeRequest === "user") {
-    const { userId, until, maxItems } = config as UserScraperConfig;
+    const { userId, until, maxItems, since } = config as UserScraperConfig;
+    let untilDate: Date = new Date();
+    if (until) {
+      untilDate = new Date(until);
+    }
+    let sinceDate: Date = new Date(2024, 1, 1);
+    if (since) {
+      sinceDate = new Date(since);
+    }
+    const from = "from:" + userId;
+    const allSearchTerms = [];
+    const searchTerms = [from, "until:" + untilDate.toISOString().split("T")[0], "since:" + sinceDate.toISOString().split("T")[0]];
+    allSearchTerms.push(searchTerms.join(" "));
+
+    console.log("allSearchTerms for scraping", JSON.stringify(allSearchTerms));
     const results = await new Scraper(env).scrapeUserTweets(userId, {
-      until: until,
+      searchTerms: allSearchTerms,
       maxItems: maxItems,
     });
     fullTweetData = results.fullTweetData;

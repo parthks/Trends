@@ -116,8 +116,6 @@ export class PineconeClient {
       vector: queryEmbedding[0].values,
     });
 
-    console.log("results", results);
-
     return results.matches.map((m) => ({
       tweet_id: m.id,
       score: m.score,

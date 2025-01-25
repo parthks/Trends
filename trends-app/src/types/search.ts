@@ -23,4 +23,5 @@ export enum SearchResultFacetField {
   KEY_TOPICS = "keyTopics",
   KEY_ENTITIES = "keyEntities",
   KEY_USERS = "keyUsers",
+  USER_NAME = "user_name",
 }

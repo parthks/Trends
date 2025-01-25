@@ -17,7 +17,7 @@ export class LLM {
   constructor(binding: CloudflareBindings) {
     this.workerAIClient = binding.AI;
     const baseURL = `https://gateway.ai.cloudflare.com/v1/${binding.CLOUDFLARE_ACCOUNT_ID}/${this.GATEWAY_ID}`;
-    console.log("api key", binding.GROQ_API_KEY, binding.OPENAI_API_KEY);
+    console.log("AI baseURL", baseURL);
     this.openai = createOpenAI({
       baseURL: `${baseURL}/openai`,
       apiKey: binding.OPENAI_API_KEY,
@@ -140,8 +140,6 @@ export class LLM {
         keyEntities: z.array(z.string()).describe("List of key entities (token names, websites, products, events) mentioned in the tweet, excluding user handles"),
       }),
     });
-
-    console.log("AI response", response.object);
 
     // if (!LLM.hasResponse(response)) {
     //   throw new Error("No response from AI");

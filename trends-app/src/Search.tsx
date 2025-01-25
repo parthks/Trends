@@ -6,9 +6,11 @@ import { SearchResult, SearchResultFacetField } from "./types/search";
 import { TypesenseTweetData } from "./types/tweet";
 import Timeline from "./components/Timeline";
 import { format } from "date-fns";
+import { SearchFaucetResults } from "./components/SearchFaucetResults";
 
 export default function Search() {
   const [results, setResults] = useState<TypesenseTweetData[]>([]);
+  const [fromUsers, setFromUsers] = useState<{ count: number; value: string }[]>([]);
   const [users, setUsers] = useState<{ count: number; value: string }[]>([]);
   const [topics, setTopics] = useState<{ count: number; value: string }[]>([]);
   const [entities, setEntities] = useState<{ count: number; value: string }[]>([]);
@@ -29,7 +31,9 @@ export default function Search() {
   }, [query, fromDate, toDate]);
 
   const handleResults = (results: SearchResult) => {
+    console.log("raw results", results);
     setResults(results.hits.map((hit) => hit.document));
+    setFromUsers(results.facet_counts.find((facet) => facet.field_name === SearchResultFacetField.USER_NAME)?.counts || []);
     setUsers(results.facet_counts.find((facet) => facet.field_name === SearchResultFacetField.KEY_USERS)?.counts || []);
     setTopics(results.facet_counts.find((facet) => facet.field_name === SearchResultFacetField.KEY_TOPICS)?.counts || []);
     setEntities(results.facet_counts.find((facet) => facet.field_name === SearchResultFacetField.KEY_ENTITIES)?.counts || []);
@@ -45,7 +49,7 @@ export default function Search() {
     setQuery(query);
   };
 
-  console.log({ users, topics, entities, results });
+  console.log({ fromUsers, users, topics, entities, results });
 
   return (
     <div className="p-4">
@@ -63,27 +67,10 @@ export default function Search() {
 
       <div className="flex flex-col gap-4 mb-4">
         <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap">
-            {users.map((user) => (
-              <p key={user.value} className="text-sm text-gray-500 bg-gray-100 rounded-md px-2 py-1 m-1">
-                {user.value} ({user.count})
-              </p>
-            ))}
-          </div>
-          <div className="flex flex-wrap">
-            {topics.map((topic) => (
-              <p key={topic.value} className="text-sm text-gray-500 bg-gray-100 rounded-md px-2 py-1 m-1">
-                {topic.value} ({topic.count})
-              </p>
-            ))}
-          </div>
-          <div className="flex flex-wrap">
-            {entities.map((entity) => (
-              <p key={entity.value} className="text-sm text-gray-500 bg-gray-100 rounded-md px-2 py-1 m-1">
-                {entity.value} ({entity.count})
-              </p>
-            ))}
-          </div>
+          <SearchFaucetResults title="From Users" results={fromUsers} />
+          <SearchFaucetResults title="Users" results={users} />
+          <SearchFaucetResults title="Topics" results={topics} />
+          <SearchFaucetResults title="Entities" results={entities} />
         </div>
       </div>
 
