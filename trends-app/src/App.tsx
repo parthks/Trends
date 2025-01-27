@@ -5,6 +5,7 @@ import Query from "./pages/Query";
 import Home from "./pages/Home";
 import Create from "./pages/Create";
 import TrendSnapshot from "./pages/TrendSnapshot";
+import Scrapes from "./pages/admin/Scrapes";
 
 function NavLinks() {
   const location = useLocation();
@@ -62,6 +63,7 @@ function App() {
             <Route path="/query" element={<Query />} />
             <Route path="/create" element={<Create />} />
             <Route path="/trend/:id" element={<TrendSnapshot />} />
+            <Route path="/admin/scrapes" element={<Scrapes />} />
           </Routes>
         </main>
       </div>

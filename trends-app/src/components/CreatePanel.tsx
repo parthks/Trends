@@ -10,7 +10,8 @@ export default function CreatePanel() {
   const tweetsInCart = useLocalStore((state) => state.tweets);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [content, setContent] = useState("");
+  const snapshotContent = useLocalStore((state) => state.snapshotContent);
+  const setSnapshotContent = useLocalStore((state) => state.setSnapshotContent);
   const [isPublishing, setIsPublishing] = useState(false);
 
   const quillRef = useRef<ReactQuill | null>(null); // Ref to access Quill instance
@@ -20,7 +21,7 @@ export default function CreatePanel() {
     const data = {
       title,
       description,
-      data: content,
+      data: snapshotContent,
       tweets: tweetsInCart,
     };
     setIsPublishing(true);
@@ -64,8 +65,8 @@ export default function CreatePanel() {
           <ReactQuill
             ref={quillRef}
             theme="snow"
-            value={content}
-            onChange={setContent}
+            value={snapshotContent}
+            onChange={setSnapshotContent}
             className="h-[calc(100vh-600px)] mb-16"
             modules={{
               toolbar: [
@@ -83,7 +84,7 @@ export default function CreatePanel() {
 
       <div className="fixed shrink-0 bg-white p-4 bottom-0 left-0 right-0">
         <button
-          disabled={isPublishing || !title || !description || !content}
+          disabled={isPublishing || !title || !description || !snapshotContent}
           onClick={handlePublish}
           className="bg-blue-500 text-white px-4 py-2 w-full rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
         >

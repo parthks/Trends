@@ -23,6 +23,10 @@ interface StoreState {
   setChatFinished: (chatFinished: boolean) => void;
   chatResult: string;
   setChatResult: (chatResult: string) => void;
+
+  //   create panel
+  snapshotContent: string;
+  setSnapshotContent: (snapshotContent: string) => void;
 }
 
 export const useLocalStore = create<StoreState>()(
@@ -47,6 +51,10 @@ export const useLocalStore = create<StoreState>()(
       setChatFinished: (chatFinished: boolean) => set({ chatFinished }),
       chatResult: "",
       setChatResult: (chatResult: string) => set({ chatResult }),
+
+      //   create panel
+      snapshotContent: "",
+      setSnapshotContent: (snapshotContent: string) => set({ snapshotContent }),
     }),
     { name: "tweets" }
   )

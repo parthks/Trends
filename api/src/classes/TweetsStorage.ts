@@ -88,10 +88,18 @@ export class R2TweetsStorage {
 
   async storeTweets(tweets: SavedTweet[]): Promise<void> {
     const promises = [];
+    console.log(`storing ${tweets.length} tweets in r2`);
+    let count = 1;
     for (const tweet of tweets) {
       promises.push(this.bucket.put(TWEETS_LOCATION + "/" + tweet.parsedTweetData.id, JSON.stringify(tweet)));
+      count++;
+      if (count % 100 === 0) {
+        console.log(`stored ${count} tweets in r2, waiting`);
+        await Promise.all(promises);
+      }
     }
     await Promise.all(promises);
+    console.log(`stored ${tweets.length} tweets in r2`);
   }
 
   async getRawFullTweetDataByID(id: string): Promise<FullTweetData | null> {
@@ -104,12 +112,20 @@ export class R2TweetsStorage {
 
   async storeRawFullTweets(tweets: FullTweetData[]): Promise<void> {
     const promises = [];
+    console.log(`storing ${tweets.length} raw tweets in r2`);
+    let count = 1;
     for (const tweet of tweets) {
       if (!tweet.id) {
         throw new Error("Tweet ID not found in tweet: " + JSON.stringify(tweet));
       }
       promises.push(this.bucket.put(RAW_TWEETS_LOCATION + "/" + tweet.id, JSON.stringify(tweet)));
+      count++;
+      if (count % 100 === 0) {
+        console.log(`stored ${count} raw tweets in r2, waiting`);
+        await Promise.all(promises);
+      }
     }
     await Promise.all(promises);
+    console.log(`stored ${tweets.length} raw tweets in r2`);
   }
 }

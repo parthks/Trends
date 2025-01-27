@@ -5,8 +5,10 @@ import SearchBar from "./SearchBar";
 import { Badge } from "./helpers/Badge";
 import ReactMarkdown from "react-markdown";
 import { CopyToClipboard } from "./helpers/CopyToClipboard";
+import showdown from "showdown";
 
 export default function ChatWithCartTweets() {
+  const converter = new showdown.Converter();
   const tweetsInCart = useLocalStore((state) => state.tweets);
   const chatInput = useLocalStore((state) => state.chatInput);
   const setChatInput = useLocalStore((state) => state.setChatInput);
@@ -14,6 +16,7 @@ export default function ChatWithCartTweets() {
   const setChatResult = useLocalStore((state) => state.setChatResult);
   const chatFinished = useLocalStore((state) => state.chatFinished);
   const setChatFinished = useLocalStore((state) => state.setChatFinished);
+  const setSnapshotContent = useLocalStore((state) => state.setSnapshotContent);
 
   const { completion, complete, isLoading, error } = useCompletion({
     fetch: (input, init) => {
@@ -64,7 +67,15 @@ export default function ChatWithCartTweets() {
 
         {chatFinished && (
           <div className="flex justify-start">
-            <CopyToClipboard text={chatResult} />
+            <CopyToClipboard
+              onClick={() => {
+                // convert markdown to html using showdown converter
+                const html = converter.makeHtml(chatResult);
+                setSnapshotContent(html);
+              }}
+              buttonText="Copy to Snapshot"
+              text={chatResult}
+            />
           </div>
         )}
         <div className="prose prose-sm max-w-none">
