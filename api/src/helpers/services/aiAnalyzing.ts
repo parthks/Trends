@@ -26,7 +26,6 @@ export const aiAnalyze = async (body: AiAnalyzeBody, env: CloudflareBindings) =>
   const llm = new LLM(env);
   const parsedTweetData = parseTweets([fullTweetData]);
   const aiAnalyzedData = await llm.analyzeTweet(parsedTweetData[0], fullTweetData.author);
-  console.log("aiAnalyzedData", aiAnalyzedData);
   // fix user names, if they do start with @, add the @
   aiAnalyzedData.keyUsers = aiAnalyzedData.keyUsers.map((user) => (user.startsWith("@") ? user : `@${user}`));
   return { scrapeRequestId, fullTweetData, aiAnalyzedData };

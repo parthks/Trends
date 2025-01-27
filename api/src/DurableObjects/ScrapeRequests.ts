@@ -77,9 +77,7 @@ export class ScrapeRequestsObject extends DurableObject {
   }
 
   private async saveData() {
-    console.log("saving data", this.scrapeState);
     await this.ctx.storage.put("scrapeState", this.scrapeState);
-    console.log("saved data", this.scrapeState);
   }
 
   async getData(): Promise<ScrapeData | null> {

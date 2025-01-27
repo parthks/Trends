@@ -35,7 +35,7 @@ export class TypesenseClient {
 
   async search(query: string, filter?: { from?: number; to?: number }) {
     const searchParameters: SearchParams = {
-      q: query,
+      q: query ?? "*",
       query_by: "text, quote, user_name, keyTopics, keyHighlight, keyEntities",
       sort_by: "_text_match:desc,created_at:desc",
       per_page: 100,
