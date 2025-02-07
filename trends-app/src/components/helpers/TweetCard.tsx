@@ -3,6 +3,7 @@ import { enrichTweet, type TwitterComponents, type EnrichedTweet, type TweetProp
 import { getTweet as _getTweet, Tweet } from "react-tweet/api";
 
 import { cn, truncate } from "@/lib/utils";
+import { CopyToClipboard } from "./CopyToClipboard";
 
 const getTweet = async (id: string) => _getTweet(id);
 
@@ -72,10 +73,13 @@ export const TweetHeader = ({ tweet }: { tweet: EnrichedTweet }) => (
         </div>
       </div>
     </div>
-    <a href={tweet.url} target="_blank" rel="noreferrer">
-      <span className="sr-only">Link to tweet</span>
-      <Twitter className="size-4 items-start text-[#3BA9EE] transition-all ease-in-out hover:scale-105" />
-    </a>
+    <div className="flex items-center space-x-1">
+      <a href={tweet.url} target="_blank" rel="noreferrer">
+        <span className="sr-only">Link to tweet</span>
+        <Twitter className="size-4 items-start text-[#3BA9EE] transition-all ease-in-out hover:scale-105" />
+      </a>
+      <CopyToClipboard text={tweet.url} buttonText="Copy Tweet Link" />
+    </div>
   </div>
 );
 

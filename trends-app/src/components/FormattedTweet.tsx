@@ -1,6 +1,7 @@
 import { TypesenseTweetData } from "@/types/tweet";
 import AddTweetToCart from "./AddTweetToCart";
 import { format } from "date-fns";
+import { CopyToClipboard } from "./helpers/CopyToClipboard";
 
 export default function FormattedTweet({ tweet }: { tweet: TypesenseTweetData }) {
   const images = [
@@ -23,7 +24,10 @@ export default function FormattedTweet({ tweet }: { tweet: TypesenseTweetData })
           </a>
           <p className="text-sm text-gray-500">Tweeted on {format(new Date(tweet.created_at), "dd MMM yyyy")}</p>
         </div>
-        <p className="text-sm text-gray-500">{tweet.is_reply ? "Reply" : tweet.is_quote ? "Quoted" : "Original"}</p>
+        <div className="flex gap-1 items-center">
+          <p className="text-sm text-gray-500">{tweet.is_reply ? "Reply" : tweet.is_quote ? "Quoted" : "Original"}</p>
+          <CopyToClipboard text="https://x.com/${tweet.user_name}/status/${tweet.id}" buttonText="Copy Tweet Link" />
+        </div>
       </div>
       <p className="text-sm text-gray-500">Key Insight: {tweet.keyHighlight}</p>
 
