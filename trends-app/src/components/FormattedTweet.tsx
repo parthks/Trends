@@ -26,7 +26,7 @@ export default function FormattedTweet({ tweet }: { tweet: TypesenseTweetData })
         </div>
         <div className="flex gap-1 items-center">
           <p className="text-sm text-gray-500">{tweet.is_reply ? "Reply" : tweet.is_quote ? "Quoted" : "Original"}</p>
-          <CopyToClipboard text="https://x.com/${tweet.user_name}/status/${tweet.id}" buttonText="Copy Tweet Link" />
+          <CopyToClipboard text={`https://x.com/${tweet.user_name}/status/${tweet.id}`} buttonText="Copy Tweet Link" />
         </div>
       </div>
       <p className="text-sm text-gray-500">Key Insight: {tweet.keyHighlight}</p>
